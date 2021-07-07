@@ -1,124 +1,155 @@
-#include <stdio.h>
+#include <ArduinoJson.h>
 #include <Log.h>
-#include <Config.h>
 #include <Udp.h>
-#include <Udp2Mqtt.h>
+#include <stdio.h>
+
+#include <config.h>
 #include <thread>
 #include <unordered_map>
 #include <utility>
+extern "C" {
+#include "zenoh-pico/net.h"
+}
 
-#define DEFAULT_CONFIG "/home/lieven/workspace/udp2mqtt/udp2mqtt.json"
+using namespace std;
 
-void overrideConfig(Config& config, int argc, char** argv);
+void overrideConfig(JsonObject &config, int argc, char **argv);
+
+#define DEFAULT_CONFIG "/home/lieven/workspace/zenoh-proxy/zenoh-proxy.json"
 
 Log logger(2048);
 // Config config;
 #define MAX_PORT 20
 
 std::string logFile = "";
-FILE* logFd = 0;
+FILE *logFd = 0;
 
-void myLogFunction(char* s, uint32_t length) {
-	fprintf(logFd, "%s\n", s);
-	fflush(logFd);
-	fprintf(stdout, "%s\r\n", s);
+void myLogFunction(char *s, uint32_t length) {
+  fprintf(logFd, "%s\n", s);
+  fflush(logFd);
+  fprintf(stdout, "%s\r\n", s);
 }
 
-void SetThreadName(std::thread* thread, const char* threadName) {
-	auto handle = thread->native_handle();
-	pthread_setname_np(handle, threadName);
+void SetThreadName(std::thread *thread, const char *threadName) {}
+
+StaticJsonDocument<20000> doc;
+
+bool parse(JsonObject &cfg, string data) {
+  DeserializationError error;
+
+  error = deserializeJson(doc, data);
+  if (error) {
+    ERROR("deserializeJson() failed: %s", error.c_str());
+    ::exit(-1);
+  }
+  return true;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
+  DeserializationError error;
+  int udpPort = 7447;
+  string host = "localhost";
+  char uriDefault[1024] = "/demo/example/zenoh-pico-pub";
+  char *uri = uriDefault;
+  if (argc > 1) {
+    uri = argv[1];
+  }
+  const char *value = "Pub from pico!";
+  if (argc > 2) {
+    value = argv[2];
+  }
 
-	std::thread threads[MAX_PORT];
-	StaticJsonDocument<10240> jsonDoc;
+  zn_properties_t *config = zn_config_default();
+  if (argc > 3) {
+    zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(argv[3]));
+  }
 
-	Sys::init();
-	INFO("build : " __DATE__ " " __TIME__);
-	if(argc > 1) {
-		INFO(" loading config file : %s ", argv[1]);
-		config.loadFile(argv[1]);
-	} else {
-		INFO(" load default config : %s", DEFAULT_CONFIG);
-		config.loadFile(DEFAULT_CONFIG);
-	}
-	overrideConfig(config, argc, argv);
-	if(logFile.length() > 0) {
-		INFO(" logging to file %s ", logFile.c_str());
-		logFd = fopen(logFile.c_str(), "w");
-		if(logFd == NULL) {
-			WARN(" open logfile %s failed : %d %s ", logFile.c_str(), errno, strerror(errno));
-		} else {
-			logger.setOutput(myLogFunction);
-		}
-	}
+  printf("Openning session...\n");
+  zn_session_t *s = zn_open(config);
+  if (s == 0) {
+    printf("Unable to open session!\n");
+    exit(-1);
+  }
 
-	config.setNameSpace("udp");
-	uint32_t udpPort = config.root()["udp"]["port"] | 1883;
-	std::unordered_map<in_addr_t, Udp2Mqtt*> receivers;
-#ifdef GPROF
-// exit after 200 sec to generate gmon.out for gprof profiling
-new std::thread([=]() {
-		sleep(200);
-		exit(0);
-			});
-#endif
-	Udp udp;
-	udp.port(udpPort);
-	udp.init();
-	while(true) {
-		UdpMsg udpMsg;
-		udp.receive(udpMsg);
-		in_addr_t fromAddress = udpMsg.srcIp;
-		uint16_t fromPort = udpMsg._srcPort;
-		auto got = receivers.find(fromAddress);
-		if(got == receivers.end()) {
-			const auto receiver = new Udp2Mqtt(udp, fromAddress, fromPort);
-			receiver->setConfig(config);
-			receiver->init();
-			char hostName[100];
-			inet_ntop(AF_INET, &fromAddress, hostName, sizeof(hostName));
-			receiver->queue(udpMsg);
-			receivers.insert(std::make_pair(fromAddress, receiver));
-			auto thread = new std::thread([=,&receivers]() {
-//						pthread_setname_np(&hostName[4]);
-				INFO(" starting thread for %s ", hostName);
-				receiver->run();
-				receivers.erase(fromAddress);
-				delete receiver;
-				INFO(" stopping thread for %s ", hostName);
-			});
-			SetThreadName(thread, &hostName[4]);
-		} else {
-			got->second->queue(udpMsg);
-		}
-	}
+  // Start the receive and the session lease loop for zenoh-pico
+  znp_start_read_task(s);
+  znp_start_lease_task(s);
+
+  printf("Declaring Resource '%s'", uri);
+  unsigned long rid = zn_declare_resource(s, zn_rname(uri));
+  printf(" => RId %lu\n", rid);
+  zn_reskey_t reskey = zn_rid(rid);
+
+  printf("Declaring Publisher on %lu\n", rid);
+  zn_publisher_t *pub = zn_declare_publisher(s, reskey);
+  if (pub == 0) {
+    printf("Unable to declare publisher.\n");
+    exit(-1);
+  }
+
+  char buf[256];
+  for (int idx = 0; 1; ++idx) {
+    sleep(1);
+    sprintf(buf, "[%4d] %s", idx, value);
+    printf("Writing Data ('%lu': '%s')...\n", rid, buf);
+    zn_write(s, reskey, (const uint8_t *)buf, strlen(buf));
+  }
+
+  zn_undeclare_publisher(pub);
+  zn_close(s);
+
+  JsonObject jsonConfig;
+  string sConfig = "{}";
+  Sys::init();
+  INFO("build : " __DATE__ " " __TIME__);
+  if (argc > 1) {
+    INFO(" loading config file : %s ", argv[1]);
+    sConfig = loadFile(argv[1]);
+  } else {
+    INFO(" load default config : %s", DEFAULT_CONFIG);
+    sConfig = loadFile(DEFAULT_CONFIG);
+  }
+
+  parse(jsonConfig, sConfig);
+
+  overrideConfig(jsonConfig, argc, argv);
+  if (logFile.length() > 0) {
+    INFO(" logging to file %s ", logFile.c_str());
+    logFd = fopen(logFile.c_str(), "w");
+    if (logFd == NULL) {
+      WARN(" open logfile %s failed : %d %s ", logFile.c_str(), errno,
+           strerror(errno));
+    } else {
+      //     logger.setOutput(myLogFunction);
+    }
+  }
 }
 
-void overrideConfig(Config& config, int argc, char** argv) {
-	int opt;
+void overrideConfig(JsonObject &config, int argc, char **argv) {
+  int opt;
 
-	while((opt = getopt(argc, argv, "f:m:l:v:")) != -1) {
-		switch(opt) {
-			case 'm':
-				config.setNameSpace("mqtt");
-				config.set("host", optarg);
-				break;
-			case 'f':
-				config.loadFile(optarg);
-				break;
-			case 'v': {
-					char logLevel = optarg[0];
-					logger.setLogLevel(logLevel);
-					break;
-				}
-			case 'l':
-				logFile = optarg;
-				break;
-			default: /* '?' */
-				fprintf(stderr, "Usage: %s [-v(TDIWE)] [-f configFile] [-l logFile] [-m mqttHost]\n", argv[0]);
-				exit(EXIT_FAILURE);
-		}
-	}
+  while ((opt = getopt(argc, argv, "f:m:l:v:")) != -1) {
+    switch (opt) {
+    case 'm':
+      config["mqtt"]["host"] = optarg;
+      break;
+    case 'f':
+      parse(config, loadFile(optarg));
+      break;
+    case 'v': {
+      char logLevel = optarg[0];
+      logger.setLogLevel(logLevel);
+      break;
+    }
+    case 'l':
+      logFile = optarg;
+      break;
+    default: /* '?' */
+      fprintf(stderr,
+              "Usage: %s [-v(TDIWE)] [-f configFile] [-l logFile] [-m "
+              "mqttHost]\n",
+              argv[0]);
+      exit(EXIT_FAILURE);
+    }
+  }
 }
