@@ -40,7 +40,7 @@ static const uint16_t fcsTable[256] = {
 class Fcs {
   uint16_t _fcs;
 
-public:
+ public:
   Fcs() { _fcs = 0xFFFF; }
   bool hasSpace(int size = 1) { return true; };
   bool write(uint8_t b) {
@@ -53,7 +53,7 @@ public:
 };
 // add a byte to the buffer, escaped according to PPP standard
 inline void addEscaped(bytes &out, byte c) {
-  if (c == PPP_ESC_CHAR || c == PPP_FLAG_CHAR) { // byte stuffing
+  if (c == PPP_ESC_CHAR || c == PPP_FLAG_CHAR) {  // byte stuffing
     out.push_back(PPP_ESC_CHAR);
     out.push_back(c ^ PPP_MASK_CHAR);
   } else {
@@ -69,7 +69,7 @@ bool ppp_frame(std::vector<uint8_t> &out, const std::vector<uint8_t> &in) {
     addEscaped(out, c);
     fcs.write(c);
   }
-  addEscaped(out, fcs.result() & 0xFF); // LSB first
+  addEscaped(out, fcs.result() & 0xFF);  // LSB first
   addEscaped(out, fcs.result() >> 8);
   out.push_back(PPP_FLAG_CHAR);
   return true;
@@ -94,8 +94,8 @@ bool ppp_deframe(bytes &out, const bytes &in) {
     return false;
   }
   // The receiver must reverse the octet stuffing procedure
-  uint count = 0;
-  for (count = 0; count < in.size(); count++) { // keep 2 bytes for CRC
+  uint32_t count = 0;
+  for (count = 0; count < in.size(); count++) {  // keep 2 bytes for CRC
     // Read a single character
     uint8_t c = in[count];
     if (c == PPP_ESC_CHAR) {

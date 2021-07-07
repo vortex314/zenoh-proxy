@@ -23,7 +23,7 @@ DTR   RTS   ENABLE  IO0  Mode
 1     1     1       1     RUN
 0     0     1       1     RUN
 1     0     0       0     RESET
-0     1     1       0     PROGRAM 
+0     1     1       0     PROGRAM
 
 */
 
@@ -38,8 +38,8 @@ struct SerialStats {
 };
 
 class Serial {
-  string _port;      // /dev/ttyUSB0
-  string _portShort; // USB0
+  string _port;       // /dev/ttyUSB0
+  string _portShort;  // USB0
   int _baudrate;
   int _fd = 0;
   fd_set _rfds;
@@ -51,7 +51,7 @@ class Serial {
   bool _connected = false;
   void setFds();
 
-public:
+ public:
   Serial();
   ~Serial();
   // commands
