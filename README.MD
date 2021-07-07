@@ -11,6 +11,7 @@ The code can start from zenoh-c and zenoh-pico. The zenoh-pico looks like the mo
 So the idea is to mimic the udp interface at the micro-controller side and encapsulate over the serial line to the proxy running on the same machine as the router. 
 
 # Target features 
+- No TCP/IP stack or ethernet or wifi required.
 - Enable zenoh communication to/from zenoh router
 - Keep alignment with new releases of zeno-pico, create a direct code-reuse
 - the proxy should support the flashing of the micro-controller ( uC ) directly through the serial line ( esptool implementation in the proxy for the ESP32 ). This is code that Espressif made available. The same should be true for a number of other uC.

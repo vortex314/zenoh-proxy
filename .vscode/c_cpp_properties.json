@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "name": "ESP32",
+            "includePath": [
+                "/usr/local/include",
+                "${workspaceFolder}/../Common/",
+                "${workspaceFolder}/../limero/inc/",
+                "${workspaceFolder}/src/",
+                "${workspaceFolder}/../cbor11"
+            ],
+            "defines": [
+                "NOTHING",
+                "__linux__",
+                "ZMQ_BUILD_DRAFT_API"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu17",
+            "cppStandard": "c++14",
+            //            "intelliSenseMode": "linux-gcc-x64",
+            "forcedInclude": [],
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
