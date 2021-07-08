@@ -30,6 +30,7 @@ extern "C" {
 
 #include <ppp_frame.h>
 #include <serial.h>
+#include <serial_protocol.h>
 
 using namespace std;
 const char *port = "/dev/ttyUSB0";
@@ -45,18 +46,7 @@ int initSerial() {
   return serial.fd();
 }
 
-typedef enum {
-  UDP_OPEN = 'U',
-  UDP_CLOSE = 'u',
-  UDP_SEND = 'S',
-  UDP_RECV = 'R',
-  TCP_OPEN = 'T',
-  TCP_CLOSE = 't',
-  TCP_SEND = 'W',
-  TCP_RECV = 'R',
-} Header;
-
-void sendFrame(Header h, const uint8_t *data, uint32_t length) {
+int sendFrame(Header h, const uint8_t *data, uint32_t length) {
   bytes buffer;
   buffer.push_back((uint8_t)h);
   for (uint32_t i = 0; i < length; i++)
@@ -64,7 +54,10 @@ void sendFrame(Header h, const uint8_t *data, uint32_t length) {
   bytes outFrame;
   ppp_frame(outFrame, buffer);
   serial.txd(outFrame);
+  return length;
 }
+
+int recvData(uint8_t *buffer, uint32_t capacity) { return 0; }
 
 //===============================
 
@@ -75,262 +68,54 @@ void dump(const char *prefix, const uint8_t *data, uint32_t length) {
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface() {
-  INFO("_zn_select_scout_iface()");
-  // @TODO: improve network interface selection
-  char s_eth_prefix[256] = "en";
-  char s_lo_prefix[] = "lo";
-  char *eth_prefix = s_eth_prefix;
-  char *lo_prefix = s_lo_prefix;
-  size_t len = 2;
-  char *loopback = 0;
-  char *iface = 0;
-  struct ifaddrs *ifap;
-  struct ifaddrs *current;
-  char host[NI_MAXHOST];
-
-  if (getifaddrs(&ifap) == -1) {
-    return 0;
-  } else {
-    current = ifap;
-    do {
-      if (current->ifa_addr != 0 && current->ifa_addr->sa_family == AF_INET) {
-        if (memcmp(current->ifa_name, eth_prefix, len) == 0) {
-          if ((current->ifa_flags & (IFF_MULTICAST | IFF_UP | IFF_RUNNING)) &&
-              !(current->ifa_flags & IFF_PROMISC)) {
-            getnameinfo(current->ifa_addr, sizeof(struct sockaddr_in), host,
-                        NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-            _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n",
-                        current->ifa_name, host);
-            iface = host;
-          }
-        } else if (memcmp(current->ifa_name, lo_prefix, len) == 0) {
-          if ((current->ifa_flags & (IFF_UP | IFF_RUNNING)) &&
-              !(current->ifa_flags & IFF_PROMISC)) {
-            getnameinfo(current->ifa_addr, sizeof(struct sockaddr_in), host,
-                        NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
-            _Z_DEBUG_VA("\t-- Interface: %s\tAddress: <%s>\n",
-                        current->ifa_name, host);
-            loopback = host;
-          }
-        }
-      }
-      current = current->ifa_next;
-    } while ((iface == 0) && (current != 0));
-  }
-  char *result = strdup((iface != 0) ? iface : loopback);
-  freeifaddrs(ifap);
-  INFO("_zn_select_scout_iface()=%s", result);
-  return result;
+   static  char unknown[256]="UNKNOWN";
+  ERROR("_zn_select_scout_iface() should not be called ! ");
+  return unknown;
 }
 
 struct sockaddr_in *_zn_make_socket_address(const char *addr, int port) {
-  INFO(" make_socket_addr(%s,%d)", addr, port);
-  struct sockaddr_in *saddr =
-      (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in));
-  memset(saddr, 0, sizeof(struct sockaddr_in));
-  saddr->sin_family = AF_INET;
-  saddr->sin_port = htons(port);
-
-  if (inet_pton(AF_INET, addr, &(saddr->sin_addr)) <= 0) {
-    free(saddr);
-    return NULL;
-  }
-
-  return saddr;
+  INFO(" make_socket_addr(%s,%d) should not be called ", addr, port);
+  return 0;
 }
 
 _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port,
                                           int timeout_usec) {
-  INFO("create_udp_socket(%s,%d,%d) ", addr, port, timeout_usec);
+  WARN("create_udp_socket(%s,%d,%d) should not be called ", addr, port,
+       timeout_usec);
   sendFrame(UDP_OPEN, 0, 0);
   _zn_socket_result_t r;
-  r.tag = _z_res_t_OK;
 
-  _Z_DEBUG_VA("Binding UDP Socket to: %s:%d\n", addr, port);
-  struct sockaddr_in saddr;
-
-  r.value.socket = socket(PF_INET, SOCK_DGRAM, 0);
-
-  if (r.value.socket < 0) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = r.value.socket;
-    r.value.socket = 0;
-    return r;
-  }
-
-  memset(&saddr, 0, sizeof(saddr));
-  saddr.sin_family = AF_INET;
-  saddr.sin_port = htons(port);
-
-  if (inet_pton(AF_INET, addr, &saddr.sin_addr) <= 0) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = _zn_err_t_INVALID_LOCATOR;
-    r.value.socket = 0;
-    return r;
-  }
-
-  if (bind(r.value.socket, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = _zn_err_t_INVALID_LOCATOR;
-    r.value.socket = 0;
-    return r;
-  }
-
-  struct timeval timeout;
-  timeout.tv_sec = 0;
-  timeout.tv_usec = timeout_usec;
-  if (setsockopt(r.value.socket, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout,
-                 sizeof(struct timeval)) == -1) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = errno;
-    close(r.value.socket);
-    r.value.socket = 0;
-    return r;
-  }
-
-  if (setsockopt(r.value.socket, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeout,
-                 sizeof(struct timeval)) == -1) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = errno;
-    close(r.value.socket);
-    r.value.socket = 0;
-    return r;
-  }
-  INFO("create_udp_socket()=%d", r.value.socket);
-  initSerial();
+  r.tag = _z_res_t_ERR;
+  r.value.error = r.value.socket;
+  r.value.socket = -1;
   return r;
 }
 
 _zn_socket_result_t _zn_open_tx_session(const char *locator) {
+  initSerial();
+  sendFrame(TCP_OPEN, 0, 0);
   INFO("open_tx_session(%s)", locator);
   _zn_socket_result_t r;
   r.tag = _z_res_t_OK;
-  char *l = strdup(locator);
-  _Z_DEBUG_VA("Connecting to: %s:\n", locator);
-  char *tx = strtok(l, "/");
-  if (strcmp(tx, "tcp") != 0) {
-    fprintf(stderr, "Locator provided is not for TCP\n");
-    exit(1);
-  }
-  char *addr_name = strdup(strtok(NULL, ":"));
-  char *s_port = strtok(NULL, ":");
-
-  int status;
-  char ip_addr[INET6_ADDRSTRLEN];
-  struct sockaddr_in *remote;
-  struct addrinfo *res;
-  status = getaddrinfo(addr_name, s_port, NULL, &res);
-  free(addr_name);
-  if (status == 0 && res != NULL) {
-    void *addr;
-    remote = (struct sockaddr_in *)res->ai_addr;
-    addr = &(remote->sin_addr);
-    inet_ntop(res->ai_family, addr, ip_addr, sizeof(ip_addr));
-  }
-  freeaddrinfo(res);
-
-  int port;
-  sscanf(s_port, "%d", &port);
-
-  _Z_DEBUG_VA("Connecting to: %s:%d\n", addr_name, port);
-  free(l);
-  struct sockaddr_in serv_addr;
-
-  r.value.socket = socket(PF_INET, SOCK_STREAM, 0);
-
-  if (r.value.socket < 0) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = r.value.socket;
-    r.value.socket = 0;
-    return r;
-  }
-
-  int flags = 1;
-  if (setsockopt(r.value.socket, SOL_SOCKET, SO_KEEPALIVE, (void *)&flags,
-                 sizeof(flags)) == -1) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = errno;
-    close(r.value.socket);
-    r.value.socket = 0;
-    return r;
-  }
-
-  struct linger ling;
-  ling.l_onoff = 1;
-  ling.l_linger = ZN_SESSION_LEASE / 1000;
-  if (setsockopt(r.value.socket, SOL_SOCKET, SO_LINGER, (void *)&ling,
-                 sizeof(struct linger)) == -1) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = errno;
-    close(r.value.socket);
-    r.value.socket = 0;
-    return r;
-  }
-
-#if defined(ZENOH_MACOS)
-  setsockopt(r.value.socket, SOL_SOCKET, SO_NOSIGPIPE, (void *)0, sizeof(int));
-#endif
-
-  memset(&serv_addr, 0, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(port);
-
-  if (inet_pton(AF_INET, ip_addr, &serv_addr.sin_addr) <= 0) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = _zn_err_t_INVALID_LOCATOR;
-    r.value.socket = 0;
-    return r;
-  }
-
-  if (connect(r.value.socket, (struct sockaddr *)&serv_addr,
-              sizeof(serv_addr)) < 0) {
-    r.tag = _z_res_t_ERR;
-    r.value.error = _zn_err_t_TX_CONNECTION;
-    r.value.socket = 0;
-    return r;
-  }
-  INFO("open_tx_session()=%d", r);
-  initSerial();
   return r;
 }
 
 void _zn_close_tx_session(_zn_socket_t sock) {
   INFO("close_tx_session(%d)", sock);
-  shutdown(sock, 2);
+  sendFrame(TCP_CLOSE, 0, 0);
 }
 
 /*------------------ Datagram ------------------*/
 int _zn_send_dgram_to(_zn_socket_t sock, const _z_wbuf_t *wbf,
                       const struct sockaddr *dest, socklen_t salen) {
-  INFO("send_dgram_to(%d)", sock);
-  _Z_DEBUG("Sending data on socket....\n");
-  int wb = 0;
-  for (size_t i = 0; i < _z_wbuf_len_iosli(wbf); i++) {
-    z_bytes_t a = _z_iosli_to_bytes(_z_wbuf_get_iosli(wbf, i));
-    dump("sendto()", a.val, a.len);
-    sendFrame(UDP_SEND, a.val, a.len);
-    int res = sendto(sock, a.val, a.len, 0, dest, salen);
-    _Z_DEBUG_VA("Socket returned: %d\n", wb);
-    if (res <= 0) {
-      _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);
-      return -1;
-    }
-    wb += res;
-  }
-  return wb;
+  WARN("send_dgram_to(%d) should not be called !", sock);
+  return -1;
 }
 
 int _zn_recv_dgram_from(_zn_socket_t sock, _z_zbuf_t *rbf,
                         struct sockaddr *from, socklen_t *salen) {
-  INFO("recv_dgram_from(%d) ", sock);
-  int rb = recvfrom(sock, _z_zbuf_get_wptr(rbf), _z_zbuf_space_left(rbf), 0,
-                    from, salen);
-  if (rb > 0) {
-    sendFrame(UDP_RECV, 0, 0);
-    dump("recvfrom()", _z_zbuf_get_wptr(rbf), rb);
-    _z_zbuf_set_wpos(rbf, _z_zbuf_get_wpos(rbf) + rb);
-  }
-  return rb;
+  WARN("recv_dgram_from(%d) should not be called!", sock);
+  return -1;
 }
 
 /*------------------ Receive ------------------*/
@@ -339,10 +124,7 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len) {
   int rb;
 
   do {
-    sendFrame(TCP_RECV, 0, 0);
-    rb = recv(sock, ptr, n, 0);
-    if (rb > 0)
-      dump("recv() ", ptr, rb);
+    rb = recvData(ptr, n);
     if (rb == 0)
       return -1;
     n -= rb;
@@ -353,11 +135,9 @@ int _zn_recv_bytes(_zn_socket_t sock, uint8_t *ptr, size_t len) {
 }
 
 int _zn_recv_zbuf(_zn_socket_t sock, _z_zbuf_t *rbf) {
-  sendFrame(TCP_RECV, 0, 0);
-  int rb = recv(sock, _z_zbuf_get_wptr(rbf), _z_zbuf_space_left(rbf), 0);
+  int rb = recvData(_z_zbuf_get_wptr(rbf), _z_zbuf_space_left(rbf));
 
   if (rb > 0) {
-    dump("recv()", _z_zbuf_get_wptr(rbf), rb);
     _z_zbuf_set_wpos(rbf, _z_zbuf_get_wpos(rbf) + rb);
   }
   return rb;
@@ -372,12 +152,7 @@ int _zn_send_wbuf(_zn_socket_t sock, const _z_wbuf_t *wbf) {
     do {
       _Z_DEBUG("Sending wbuf on socket...");
       dump("send()", bs.val, n);
-      sendFrame(TCP_SEND, bs.val, n);
-#if defined(ZENOH_LINUX)
-      wb = send(sock, bs.val, n, MSG_NOSIGNAL);
-#else
-      wb = send(sock, bs.val, n, 0);
-#endif
+      wb = sendFrame(TCP_SEND, bs.val, n);
       _Z_DEBUG_VA(" sent %d bytes\n", wb);
       if (wb <= 0) {
         _Z_DEBUG_VA("Error while sending data over socket [%d]\n", wb);

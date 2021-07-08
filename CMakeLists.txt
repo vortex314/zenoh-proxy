@@ -51,7 +51,12 @@ target_sources(loopback PRIVATE src/loopback.cpp
   src/config.cpp 
   src/unix_serial.cpp 
   src/util.cpp )
-target_sources(proxy PRIVATE src/proxy.cpp src/ppp_frame.cpp src/Udp.cpp src/serial.cpp src/config.cpp ) 
+target_sources(proxy PRIVATE src/proxy.cpp 
+  src/ppp_frame.cpp 
+  ${PICO_SRCS} 
+  src/serial.cpp 
+  src/config.cpp 
+  src/util.cpp) 
 
 
 target_link_libraries(loopback 
