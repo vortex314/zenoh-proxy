@@ -7,7 +7,8 @@
                 "${workspaceFolder}/../Common/",
                 "${workspaceFolder}/../limero/inc/",
                 "${workspaceFolder}/src/",
-                "${workspaceFolder}/../cbor11"
+                "${workspaceFolder}/../ArduinoJson/src",
+                "${workspaceFolder}/../zenoh-pico/include"
             ],
             "defines": [
                 "NOTHING",
