@@ -20,7 +20,7 @@ set(PICO_SRCS ${PICO}/src/codec.c
   ${PICO}/src/net/read_task.c
   ${PICO}/src/net/rname.c
   ${PICO}/src/net/session.c
-  ${PICO}/src/net/unix/network.c
+#  ${PICO}/src/net/unix/network.c
   ${PICO}/src/net/unix/system.c
   ${PICO}/src/compat/strdup.c
  )
@@ -44,7 +44,13 @@ add_executable(proxy)
 
 
 # declare our source files
-target_sources(loopback PRIVATE src/loopback.cpp  src/serial.cpp  ${PICO_SRCS} src/config.cpp )
+target_sources(loopback PRIVATE src/loopback.cpp  
+  src/serial.cpp  
+  src/ppp_frame.cpp
+  ${PICO_SRCS} 
+  src/config.cpp 
+  src/unix_serial.cpp 
+  src/util.cpp )
 target_sources(proxy PRIVATE src/proxy.cpp src/ppp_frame.cpp src/Udp.cpp src/serial.cpp src/config.cpp ) 
 
 

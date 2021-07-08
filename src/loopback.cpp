@@ -13,6 +13,7 @@ extern "C" {
 
 using namespace std;
 
+
 void overrideConfig(JsonObject &config, int argc, char **argv);
 
 #define DEFAULT_CONFIG "/home/lieven/workspace/zenoh-proxy/zenoh-proxy.json"
@@ -97,32 +98,32 @@ int main(int argc, char **argv) {
 
   zn_undeclare_publisher(pub);
   zn_close(s);
-
-  JsonObject jsonConfig;
-  string sConfig = "{}";
-  Sys::init();
-  INFO("build : " __DATE__ " " __TIME__);
-  if (argc > 1) {
-    INFO(" loading config file : %s ", argv[1]);
-    sConfig = loadFile(argv[1]);
-  } else {
-    INFO(" load default config : %s", DEFAULT_CONFIG);
-    sConfig = loadFile(DEFAULT_CONFIG);
-  }
-
-  parse(jsonConfig, sConfig);
-
-  overrideConfig(jsonConfig, argc, argv);
-  if (logFile.length() > 0) {
-    INFO(" logging to file %s ", logFile.c_str());
-    logFd = fopen(logFile.c_str(), "w");
-    if (logFd == NULL) {
-      WARN(" open logfile %s failed : %d %s ", logFile.c_str(), errno,
-           strerror(errno));
+  /*
+    JsonObject jsonConfig;
+    string sConfig = "{}";
+    Sys::init();
+    INFO("build : " __DATE__ " " __TIME__);
+    if (argc > 1) {
+      INFO(" loading config file : %s ", argv[1]);
+      sConfig = loadFile(argv[1]);
     } else {
-      //     logger.setOutput(myLogFunction);
+      INFO(" load default config : %s", DEFAULT_CONFIG);
+      sConfig = loadFile(DEFAULT_CONFIG);
     }
-  }
+
+    parse(jsonConfig, sConfig);
+
+    overrideConfig(jsonConfig, argc, argv);
+    if (logFile.length() > 0) {
+      INFO(" logging to file %s ", logFile.c_str());
+      logFd = fopen(logFile.c_str(), "w");
+      if (logFd == NULL) {
+        WARN(" open logfile %s failed : %d %s ", logFile.c_str(), errno,
+             strerror(errno));
+      } else {
+        //     logger.setOutput(myLogFunction);
+      }
+    }*/
 }
 
 void overrideConfig(JsonObject &config, int argc, char **argv) {
