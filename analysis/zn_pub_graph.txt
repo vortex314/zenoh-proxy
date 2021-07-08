@@ -1,0 +1,937 @@
+    1 	main: int (), <zn_pub.c 19>
+    2 		zn_config_default: zn_properties_t * (), <../../src/net/session.c 702>
+    3 			zn_config_client: zn_properties_t * (), <../../src/net/session.c 682>
+    4 				zn_config_empty: zn_properties_t * (), <../../src/net/session.c 677>
+    5 					zn_properties_make: zn_properties_t * (), <../../src/net/property.c 19>
+    6 						_z_i_map_make: _z_i_map_t * (), <../../src/collection.c 230>
+    7 							malloc: <>
+    8 				zn_properties_insert: zn_properties_t * (), <../../src/net/property.c 24>
+    9 					_z_i_map_set: void (), <../../src/collection.c 252>
+   10 						malloc: <>
+   11 						_z_list_cons: _z_list_t * (), <../../src/collection.c 102>
+   12 							_z_list_of: _z_list_t * (), <../../src/collection.c 94>
+   13 								malloc: <>
+   14 								memset: void * (), </usr/include/string.h 61>
+   15 				z_string_make: z_string_t (), <../../src/utils.c 18>
+   16 					strdup: char * (), <../../src/compat/strdup.c 20>
+   17 						malloc: <>
+   18 						strlen: <>
+   19 						strcpy: char * (), </usr/include/string.h 122>
+   20 					strlen: <>
+   21 		zn_properties_insert: 8
+   22 		z_string_make: 15
+   23 		printf: <>
+   24 		zn_open: zn_session_t * (), <../../src/net/session.c 736>
+   25 			zn_properties_get: z_string_t (), <../../src/net/property.c 30>
+   26 				_z_i_map_get: void * (), <../../src/collection.c 296>
+   27 				strlen: <>
+   28 			strtof: float (), </usr/include/stdlib.h 123>
+   29 			_zn_scout: zn_hello_array_t (), <../../src/net/session.c 283>
+   30 				_zn_select_scout_iface: char * (), <../../src/net/unix/network.c 28>
+   31 					getifaddrs: <>
+   32 					memcmp: int (), </usr/include/string.h 64>
+   33 					getnameinfo: <>
+   34 					strdup: 16
+   35 					freeifaddrs: <>
+   36 				_zn_create_udp_socket: _zn_socket_result_t (), <../../src/net/unix/network.c 100>
+   37 					socket: int (), </usr/include/x86_64-linux-gnu/sys/socket.h 102>
+   38 					memset: void * (), </usr/include/string.h 61>
+   39 					htons: <>
+   40 					inet_pton: int (), </usr/include/arpa/inet.h 58>
+   41 					bind: int (), </usr/include/x86_64-linux-gnu/sys/socket.h 112>
+   42 					setsockopt: int (), </usr/include/x86_64-linux-gnu/sys/socket.h 215>
+   43 					__errno_location: <>
+   44 					close: <>
+   45 				free: <>
+   46 				_z_wbuf_make: _z_wbuf_t (), <../../src/iobuf.c 254>
+   47 					_z_vec_make: inline _z_vec_t (), <../../src/collection.c 23>
+   48 						malloc: <>
+   49 					_z_wbuf_new_iosli: void (), <../../src/iobuf.c 235>
+   50 						_z_iosli_make: _z_iosli_t (), <../../src/iobuf.c 33>
+   51 							_z_iosli_wrap: _z_iosli_t (), <../../src/iobuf.c 21>
+   52 								__extension__: , </usr/include/stdlib.h 858>
+   53 									__builtin_bswap64: <>
+   54 								__assert_fail: void (), </usr/include/assert.h 69>
+   55 							malloc: <>
+   56 						malloc: <>
+   57 						memcpy: void * (), </usr/include/string.h 43>
+   58 						_z_wbuf_add_iosli: void (), <../../src/iobuf.c 210>
+   59 							_z_vec_len: inline size_t (), <../../src/collection.c 55>
+   60 							_z_wbuf_get_iosli: _z_iosli_t * (), <../../src/iobuf.c 244>
+   61 								_z_vec_get: const void * (), <../../src/collection.c 79>
+   62 									__extension__: , </usr/include/strings.h 111>
+   63 										__builtin_bswap64: <>
+   64 									__assert_fail: void (), </usr/include/assert.h 69>
+   65 							_z_vec_append: void (), <../../src/collection.c 60>
+   66 								malloc: <>
+   67 								memcpy: void * (), </usr/include/string.h 43>
+   68 								free: <>
+   69 				_zn_session_message_init: _zn_session_message_t (), <../../src/net/internal.c 48>
+   70 					memset: void * (), </usr/include/string.h 61>
+   71 				_zn_session_message_encode: int (), <../../src/net/msgcodec.c 1936>
+   72 					_zn_attachment_encode: int (), <../../src/net/msgcodec.c 257>
+   73 						_z_wbuf_write: int (), <../../src/iobuf.c 364>
+   74 							_z_wbuf_get_iosli: 60
+   75 							_z_iosli_writable: size_t (), <../../src/iobuf.c 64>
+   76 							_z_iosli_write: void (), <../../src/iobuf.c 69>
+   77 								_z_iosli_writable: size_t (), <../../src/iobuf.c 64>
+   78 								__extension__: 52
+   79 								__assert_fail: void (), </usr/include/assert.h 69>
+   80 							_z_wbuf_new_iosli: 49
+   81 						_zn_payload_encode: int (), <../../src/net/msgcodec.c 28>
+   82 							_z_bytes_encode: int (), <../../src/codec.c 54>
+   83 								_z_zint_encode: int (), <../../src/codec.c 22>
+   84 									_z_wbuf_write: 73
+   85 								_z_wbuf_add_iosli_from: void (), <../../src/iobuf.c 224>
+   86 									_z_iosli_make: 50
+   87 									malloc: <>
+   88 									memcpy: void * (), </usr/include/string.h 43>
+   89 									_z_wbuf_add_iosli: 58
+   90 								_z_wbuf_write_bytes: int (), <../../src/iobuf.c 386>
+   91 									_z_wbuf_get_iosli: 60
+   92 									_z_iosli_writable: size_t (), <../../src/iobuf.c 64>
+   93 									_z_iosli_write_bytes: void (), <../../src/iobuf.c 75>
+   94 										_z_iosli_writable: size_t (), <../../src/iobuf.c 64>
+   95 										__extension__: 52
+   96 										__assert_fail: void (), </usr/include/assert.h 69>
+   97 										memcpy: void * (), </usr/include/string.h 43>
+   98 									_z_wbuf_new_iosli: 49
+   99 					_z_wbuf_write: 73
+  100 					_zn_frame_encode: int (), <../../src/net/msgcodec.c 1849>
+  101 						_z_zint_encode: 83
+  102 						_z_wbuf_write_bytes: 90
+  103 						_z_vec_len: inline size_t (), <../../src/collection.c 55>
+  104 						_zn_zenoh_message_encode: int (), <../../src/net/msgcodec.c 1266>
+  105 							_zn_attachment_encode: 72
+  106 							_zn_reply_context_encode: int (), <../../src/net/msgcodec.c 307>
+  107 								_z_wbuf_write: 73
+  108 								_z_zint_encode: 83
+  109 								_z_bytes_encode: 82
+  110 							_z_wbuf_write: 73
+  111 							_zn_declare_encode: int (), <../../src/net/msgcodec.c 805>
+  112 								_z_zint_encode: 83
+  113 								_zn_declaration_encode: int (), <../../src/net/msgcodec.c 666>
+  114 									_z_wbuf_write: 73
+  115 									_zn_res_decl_encode: int (), <../../src/net/msgcodec.c 368>
+  116 										_z_zint_encode: 83
+  117 										_zn_reskey_encode: int (), <../../src/net/msgcodec.c 155>
+  118 											_z_zint_encode: 83
+  119 											_z_str_encode: int (), <../../src/codec.c 91>
+  120 												strlen: <>
+  121 												_z_zint_encode: 83
+  122 												_z_wbuf_write_bytes: 90
+  123 									_zn_pub_decl_encode: int (), <../../src/net/msgcodec.c 405>
+  124 										_zn_reskey_encode: 117
+  125 									_zn_sub_decl_encode: int (), <../../src/net/msgcodec.c 437>
+  126 										_zn_reskey_encode: 117
+  127 										_zn_subinfo_encode: int (), <../../src/net/msgcodec.c 96>
+  128 											_z_wbuf_write: 73
+  129 											_zn_period_encode: int (), <../../src/net/codec.c 62>
+  130 												_z_zint_encode: 83
+  131 									_zn_qle_decl_encode: int (), <../../src/net/msgcodec.c 491>
+  132 										_zn_reskey_encode: 117
+  133 										_z_zint_encode: 83
+  134 									_zn_forget_res_decl_encode: int (), <../../src/net/msgcodec.c 537>
+  135 										_z_zint_encode: 83
+  136 									_zn_forget_pub_decl_encode: int (), <../../src/net/msgcodec.c 570>
+  137 										_zn_reskey_encode: 117
+  138 									_zn_forget_sub_decl_encode: int (), <../../src/net/msgcodec.c 602>
+  139 										_zn_reskey_encode: 117
+  140 									_zn_forget_qle_decl_encode: int (), <../../src/net/msgcodec.c 634>
+  141 										_zn_reskey_encode: 117
+  142 							_zn_data_encode: int (), <../../src/net/msgcodec.c 1001>
+  143 								_zn_reskey_encode: 117
+  144 								_zn_data_info_encode: int (), <../../src/net/msgcodec.c 871>
+  145 									_z_zint_encode: 83
+  146 									_z_timestamp_encode: int (), <../../src/net/msgcodec.c 59>
+  147 										_z_zint_encode: 83
+  148 										_z_bytes_encode: 82
+  149 									_z_bytes_encode: 82
+  150 								_zn_payload_encode: 81
+  151 							_zn_pull_encode: int (), <../../src/net/msgcodec.c 1055>
+  152 								_zn_reskey_encode: 117
+  153 								_z_zint_encode: 83
+  154 							_zn_query_encode: int (), <../../src/net/msgcodec.c 1125>
+  155 								_zn_reskey_encode: 117
+  156 								_z_str_encode: 119
+  157 								_z_zint_encode: 83
+  158 								_zn_query_target_encode: int (), <../../src/net/msgcodec.c 1105>
+  159 									_z_zint_encode: 83
+  160 								_zn_query_consolidation_encode: int (), <../../src/net/msgcodec.c 1116>
+  161 									_z_zint_encode: 83
+  162 						_z_vec_get: 61
+  163 					_zn_scout_encode: int (), <../../src/net/msgcodec.c 1419>
+  164 						_z_zint_encode: 83
+  165 					_zn_hello_encode: int (), <../../src/net/msgcodec.c 1458>
+  166 						_z_bytes_encode: 82
+  167 						_z_zint_encode: 83
+  168 						_zn_locators_encode: int (), <../../src/net/msgcodec.c 209>
+  169 							_z_zint_encode: 83
+  170 							_z_str_encode: 119
+  171 					_zn_init_encode: int (), <../../src/net/msgcodec.c 1520>
+  172 						_z_wbuf_write: 73
+  173 						_z_zint_encode: 83
+  174 						_z_bytes_encode: 82
+  175 					_zn_open_encode: int (), <../../src/net/msgcodec.c 1587>
+  176 						_z_zint_encode: 83
+  177 						_z_bytes_encode: 82
+  178 					_zn_close_encode: int (), <../../src/net/msgcodec.c 1646>
+  179 						_z_bytes_encode: 82
+  180 						_z_wbuf_write: 73
+  181 					_zn_sync_encode: int (), <../../src/net/msgcodec.c 1687>
+  182 						_z_zint_encode: 83
+  183 					_zn_ack_nack_encode: int (), <../../src/net/msgcodec.c 1732>
+  184 						_z_zint_encode: 83
+  185 					_zn_keep_alive_encode: int (), <../../src/net/msgcodec.c 1777>
+  186 						_z_bytes_encode: 82
+  187 					_zn_ping_pong_encode: int (), <../../src/net/msgcodec.c 1816>
+  188 						_z_zint_encode: 83
+  189 				strdup: 16
+  190 				zn_properties_get: 25
+  191 				strtok: char * (), </usr/include/string.h 336>
+  192 				atoi: <>
+  193 				_zn_make_socket_address: struct sockaddr_in * (), <../../src/net/unix/network.c 84>
+  194 					malloc: <>
+  195 					memset: void * (), </usr/include/string.h 61>
+  196 					htons: <>
+  197 					inet_pton: int (), </usr/include/arpa/inet.h 58>
+  198 					free: <>
+  199 				_zn_scout_loop: zn_hello_array_t (), <../../src/net/session.c 171>
+  200 					_zn_send_dgram_to: int (), <../../src/net/unix/network.c 264>
+  201 						_z_iosli_to_bytes: z_bytes_t (), <../../src/iobuf.c 88>
+  202 							_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  203 						_z_wbuf_get_iosli: 60
+  204 						sendto: <>
+  205 					malloc: <>
+  206 					_z_zbuf_make: _z_zbuf_t (), <../../src/iobuf.c 110>
+  207 						_z_iosli_make: 50
+  208 					_z_clock_now: struct timespec (), <../../src/net/unix/system.c 98>
+  209 						clock_gettime: int (), </usr/include/time.h 213>
+  210 					_z_clock_elapsed_ms: clock_t (), <../../src/net/unix/system.c 114>
+  211 						clock_gettime: int (), </usr/include/time.h 213>
+  212 					_z_zbuf_clear: void (), <../../src/iobuf.c 187>
+  213 						_z_iosli_clear: void (), <../../src/iobuf.c 96>
+  214 					_zn_recv_dgram_from: int (), <../../src/net/unix/network.c 283>
+  215 						recvfrom: <>
+  216 						_z_zbuf_get_wptr: uint8_t * (), <../../src/iobuf.c 182>
+  217 						_z_zbuf_space_left: size_t (), <../../src/iobuf.c 130>
+  218 							_z_iosli_writable: size_t (), <../../src/iobuf.c 64>
+  219 						_z_zbuf_set_wpos: void (), <../../src/iobuf.c 171>
+  220 							__extension__: 52
+  221 							__assert_fail: void (), </usr/include/assert.h 69>
+  222 						_z_zbuf_get_wpos: size_t (), <../../src/iobuf.c 160>
+  223 					_zn_session_message_decode: _zn_session_message_p_result_t (), <../../src/net/msgcodec.c 2076>
+  224 						_zn_session_message_p_result_init: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 48>
+  225 							malloc: <>
+  226 						_zn_session_message_decode_na: void (), <../../src/net/msgcodec.c 1974>
+  227 							_z_zbuf_read: uint8_t (), <../../src/iobuf.c 140>
+  228 								_z_iosli_read: uint8_t (), <../../src/iobuf.c 45>
+  229 									__extension__: 52
+  230 									__assert_fail: void (), </usr/include/assert.h 69>
+  231 							_zn_frame_decode: _zn_frame_result_t (), <../../src/net/msgcodec.c 1914>
+  232 								_zn_frame_decode_na: void (), <../../src/net/msgcodec.c 1872>
+  233 									_z_zint_decode: _z_zint_result_t (), <../../src/codec.c 33>
+  234 										_z_zbuf_read: 227
+  235 									_z_zbuf_len: size_t (), <../../src/iobuf.c 135>
+  236 										_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  237 									_z_zbuf_get_rptr: uint8_t * (), <../../src/iobuf.c 177>
+  238 									_z_zbuf_set_rpos: void (), <../../src/iobuf.c 165>
+  239 										__extension__: 52
+  240 										__assert_fail: void (), </usr/include/assert.h 69>
+  241 									_z_zbuf_get_wpos: size_t (), <../../src/iobuf.c 160>
+  242 									_z_vec_make: 47
+  243 									_z_zbuf_get_rpos: size_t (), <../../src/iobuf.c 155>
+  244 									_zn_zenoh_message_decode: _zn_zenoh_message_p_result_t (), <../../src/net/msgcodec.c 1370>
+  245 										_zn_zenoh_message_p_result_init: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 64>
+  246 											malloc: <>
+  247 										_zn_zenoh_message_decode_na: void (), <../../src/net/msgcodec.c 1299>
+  248 											_z_zbuf_read: 227
+  249 											_zn_data_decode: _zn_data_result_t (), <../../src/net/msgcodec.c 1040>
+  250 												_zn_data_decode_na: void (), <../../src/net/msgcodec.c 1014>
+  251 													_zn_reskey_decode: _zn_reskey_result_t (), <../../src/net/msgcodec.c 191>
+  252 														_zn_reskey_decode_na: void (), <../../src/net/msgcodec.c 169>
+  253 															_z_zint_decode: 233
+  254 															_z_str_decode: _z_str_result_t (), <../../src/codec.c 99>
+  255 																_z_zint_decode: 233
+  256 																malloc: <>
+  257 																_z_zbuf_read_bytes: void (), <../../src/iobuf.c 145>
+  258 																	_z_iosli_read_bytes: void (), <../../src/iobuf.c 51>
+  259 																		_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  260 																		__extension__: 52
+  261 																		__assert_fail: void (), </usr/include/assert.h 69>
+  262 																		memcpy: void * (), </usr/include/string.h 43>
+  263 													_zn_data_info_decode: _zn_data_info_result_t (), <../../src/net/msgcodec.c 975>
+  264 														_zn_data_info_decode_na: void (), <../../src/net/msgcodec.c 905>
+  265 															_z_zint_decode: 233
+  266 															_z_timestamp_decode: _zn_timestamp_result_t (), <../../src/net/msgcodec.c 83>
+  267 																_z_timestamp_decode_na: void (), <../../src/net/msgcodec.c 68>
+  268 																	_z_zint_decode: 233
+  269 																	_z_bytes_decode: _z_bytes_result_t (), <../../src/codec.c 83>
+  270 																		_z_bytes_decode_na: void (), <../../src/codec.c 71>
+  271 																			_z_zint_decode: 233
+  272 																			_z_zbuf_get_rptr: uint8_t * (), <../../src/iobuf.c 177>
+  273 																			_z_zbuf_set_rpos: 238
+  274 																			_z_zbuf_get_rpos: size_t (), <../../src/iobuf.c 155>
+  275 															_z_bytes_decode: 269
+  276 													_zn_payload_decode: _zn_payload_result_t (), <../../src/net/msgcodec.c 46>
+  277 														_zn_payload_decode_na: void (), <../../src/net/msgcodec.c 36>
+  278 															_z_bytes_decode: 269
+  279 											_zn_attachment_decode: _zn_attachment_p_result_t (), <../../src/net/msgcodec.c 293>
+  280 												_zn_attachment_p_result_init: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 36>
+  281 													malloc: <>
+  282 												_zn_attachment_decode_na: void (), <../../src/net/msgcodec.c 270>
+  283 													_zn_payload_decode: 276
+  284 													free: <>
+  285 											_zn_reply_context_decode: _zn_reply_context_p_result_t (), <../../src/net/msgcodec.c 350>
+  286 												_zn_reply_context_p_result_init: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 37>
+  287 													malloc: <>
+  288 												_zn_reply_context_decode_na: void (), <../../src/net/msgcodec.c 325>
+  289 													_z_zint_decode: 233
+  290 													free: <>
+  291 													_z_bytes_decode: 269
+  292 											_zn_declare_decode: _zn_declare_result_t (), <../../src/net/msgcodec.c 856>
+  293 												_zn_declare_decode_na: void (), <../../src/net/msgcodec.c 820>
+  294 													_z_zint_decode: 233
+  295 													malloc: <>
+  296 													_zn_declaration_decode_na: void (), <../../src/net/msgcodec.c 696>
+  297 														_z_zbuf_read: 227
+  298 														_zn_res_decl_decode: _zn_res_decl_result_t (), <../../src/net/msgcodec.c 392>
+  299 															_zn_res_decl_decode_na: void (), <../../src/net/msgcodec.c 377>
+  300 																_z_zint_decode: 233
+  301 																_zn_reskey_decode: 251
+  302 														_zn_pub_decl_decode: _zn_pub_decl_result_t (), <../../src/net/msgcodec.c 424>
+  303 															_zn_pub_decl_decode_na: void (), <../../src/net/msgcodec.c 413>
+  304 																_zn_reskey_decode: 251
+  305 														_zn_sub_decl_decode: _zn_sub_decl_result_t (), <../../src/net/msgcodec.c 477>
+  306 															_zn_sub_decl_decode_na: void (), <../../src/net/msgcodec.c 449>
+  307 																_zn_reskey_decode: 251
+  308 																_zn_subinfo_decode: _zn_subinfo_result_t (), <../../src/net/msgcodec.c 141>
+  309 																	_zn_subinfo_decode_na: void (), <../../src/net/msgcodec.c 113>
+  310 																		_z_zbuf_read: 227
+  311 																		_zn_period_decode: _zn_period_result_t (), <../../src/net/codec.c 85>
+  312 																			_zn_period_decode_na: void (), <../../src/net/codec.c 69>
+  313 																				_z_zint_decode: 233
+  314 																		malloc: <>
+  315 																		memcpy: void * (), </usr/include/string.h 43>
+  316 														_zn_qle_decl_decode: _zn_qle_decl_result_t (), <../../src/net/msgcodec.c 524>
+  317 															_zn_qle_decl_decode_na: void (), <../../src/net/msgcodec.c 503>
+  318 																_zn_reskey_decode: 251
+  319 																_z_zint_decode: 233
+  320 														_zn_forget_res_decl_decode: _zn_forget_res_decl_result_t (), <../../src/net/msgcodec.c 556>
+  321 															_zn_forget_res_decl_decode_na: void (), <../../src/net/msgcodec.c 545>
+  322 																_z_zint_decode: 233
+  323 														_zn_forget_pub_decl_decode: _zn_forget_pub_decl_result_t (), <../../src/net/msgcodec.c 589>
+  324 															_zn_forget_pub_decl_decode_na: void (), <../../src/net/msgcodec.c 578>
+  325 																_zn_reskey_decode: 251
+  326 														_zn_forget_sub_decl_decode: _zn_forget_sub_decl_result_t (), <../../src/net/msgcodec.c 621>
+  327 															_zn_forget_sub_decl_decode_na: void (), <../../src/net/msgcodec.c 610>
+  328 																_zn_reskey_decode: 251
+  329 														_zn_forget_qle_decl_decode: _zn_forget_qle_decl_result_t (), <../../src/net/msgcodec.c 653>
+  330 															_zn_forget_qle_decl_decode_na: void (), <../../src/net/msgcodec.c 642>
+  331 																_zn_reskey_decode: 251
+  332 													_zn_declaration_free: void (), <../../src/net/msgcodec.c 769>
+  333 														_zn_res_decl_free: void (), <../../src/net/msgcodec.c 399>
+  334 															_zn_reskey_free: void (), <../../src/net/msgcodec.c 198>
+  335 																free: <>
+  336 														_zn_pub_decl_free: void (), <../../src/net/msgcodec.c 431>
+  337 															_zn_reskey_free: 334
+  338 														_zn_sub_decl_free: void (), <../../src/net/msgcodec.c 484>
+  339 															_zn_reskey_free: 334
+  340 															_zn_subinfo_free: void (), <../../src/net/msgcodec.c 148>
+  341 																free: <>
+  342 														_zn_qle_decl_free: void (), <../../src/net/msgcodec.c 531>
+  343 															_zn_reskey_free: 334
+  344 														_zn_forget_res_decl_free: void (), <../../src/net/msgcodec.c 563>
+  345 														_zn_forget_pub_decl_free: void (), <../../src/net/msgcodec.c 596>
+  346 															_zn_reskey_free: 334
+  347 														_zn_forget_sub_decl_free: void (), <../../src/net/msgcodec.c 628>
+  348 															_zn_reskey_free: 334
+  349 														_zn_forget_qle_decl_free: void (), <../../src/net/msgcodec.c 660>
+  350 															_zn_reskey_free: 334
+  351 													free: <>
+  352 											_zn_query_decode: _zn_query_result_t (), <../../src/net/msgcodec.c 1252>
+  353 												_zn_query_decode_na: void (), <../../src/net/msgcodec.c 1218>
+  354 													_zn_reskey_decode: 251
+  355 													_z_str_decode: 254
+  356 													_z_zint_decode: 233
+  357 													_zn_query_target_decode: _zn_query_target_result_t (), <../../src/net/msgcodec.c 1142>
+  358 														_z_zint_decode: 233
+  359 													_zn_query_consolidation_decode: _zn_query_consolidation_result_t (), <../../src/net/msgcodec.c 1165>
+  360 														_z_zint_decode: 233
+  361 											_zn_pull_decode: _zn_pull_result_t (), <../../src/net/msgcodec.c 1092>
+  362 												_zn_pull_decode_na: void (), <../../src/net/msgcodec.c 1070>
+  363 													_zn_reskey_decode: 251
+  364 													_z_zint_decode: 233
+  365 											_zn_zenoh_message_p_result_free: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 64>
+  366 												free: <>
+  367 									_z_vec_append: 65
+  368 							_zn_attachment_decode: 279
+  369 							_zn_scout_decode: _zn_scout_result_t (), <../../src/net/msgcodec.c 1444>
+  370 								_zn_scout_decode_na: void (), <../../src/net/msgcodec.c 1430>
+  371 									_z_zint_decode: 233
+  372 							_zn_hello_decode: _zn_hello_result_t (), <../../src/net/msgcodec.c 1503>
+  373 								_zn_hello_decode_na: void (), <../../src/net/msgcodec.c 1475>
+  374 									_z_bytes_decode: 269
+  375 									_z_zint_decode: 233
+  376 									_zn_locators_decode: _zn_locators_result_t (), <../../src/net/msgcodec.c 241>
+  377 										_zn_locators_decode_na: void (), <../../src/net/msgcodec.c 221>
+  378 											_z_zint_decode: 233
+  379 											_z_str_array_init: void (), <../../src/collection.c 441>
+  380 												malloc: <>
+  381 											_z_str_decode: 254
+  382 									_z_str_array_move: void (), <../../src/collection.c 470>
+  383 							_zn_init_decode: _zn_init_result_t (), <../../src/net/msgcodec.c 1572>
+  384 								_zn_init_decode_na: void (), <../../src/net/msgcodec.c 1538>
+  385 									_z_zbuf_read: 227
+  386 									_z_zint_decode: 233
+  387 									_z_bytes_decode: 269
+  388 							_zn_open_decode: _zn_open_result_t (), <../../src/net/msgcodec.c 1632>
+  389 								_zn_open_decode_na: void (), <../../src/net/msgcodec.c 1608>
+  390 									_z_zint_decode: 233
+  391 									_z_bytes_decode: 269
+  392 							_zn_close_decode: _zn_close_result_t (), <../../src/net/msgcodec.c 1673>
+  393 								_zn_close_decode_na: void (), <../../src/net/msgcodec.c 1657>
+  394 									_z_bytes_decode: 269
+  395 									_z_zbuf_read: 227
+  396 							_zn_sync_decode: _zn_sync_result_t (), <../../src/net/msgcodec.c 1718>
+  397 								_zn_sync_decode_na: void (), <../../src/net/msgcodec.c 1700>
+  398 									_z_zint_decode: 233
+  399 							_zn_ack_nack_decode: _zn_ack_nack_result_t (), <../../src/net/msgcodec.c 1763>
+  400 								_zn_ack_nack_decode_na: void (), <../../src/net/msgcodec.c 1745>
+  401 									_z_zint_decode: 233
+  402 							_zn_keep_alive_decode: _zn_keep_alive_result_t (), <../../src/net/msgcodec.c 1802>
+  403 								_zn_keep_alive_decode_na: void (), <../../src/net/msgcodec.c 1788>
+  404 									_z_bytes_decode: 269
+  405 							_zn_ping_pong_decode: _zn_ping_pong_result_t (), <../../src/net/msgcodec.c 1835>
+  406 								_zn_ping_pong_decode_na: void (), <../../src/net/msgcodec.c 1824>
+  407 									_z_zint_decode: 233
+  408 					memcpy: void * (), </usr/include/string.h 43>
+  409 					free: <>
+  410 					_z_bytes_copy: void (), <../../src/collection.c 370>
+  411 						_z_bytes_init: void (), <../../src/collection.c 352>
+  412 							malloc: <>
+  413 						memcpy: void * (), </usr/include/string.h 43>
+  414 					_z_bytes_reset: void (), <../../src/collection.c 385>
+  415 					_z_str_array_copy: void (), <../../src/collection.c 462>
+  416 						_z_str_array_init: 379
+  417 						strdup: 16
+  418 					_zn_session_message_free: void (), <../../src/net/msgcodec.c 2084>
+  419 						_zn_attachment_free: void (), <../../src/net/msgcodec.c 301>
+  420 							_zn_payload_free: void (), <../../src/net/msgcodec.c 53>
+  421 						free: <>
+  422 						_zn_scout_free: void (), <../../src/net/msgcodec.c 1451>
+  423 						_zn_hello_free: void (), <../../src/net/msgcodec.c 1510>
+  424 							_zn_locators_free: void (), <../../src/net/msgcodec.c 248>
+  425 								_z_str_array_free: void (), <../../src/collection.c 455>
+  426 									free: <>
+  427 						_zn_init_free: void (), <../../src/net/msgcodec.c 1579>
+  428 						_zn_open_free: void (), <../../src/net/msgcodec.c 1639>
+  429 						_zn_close_free: void (), <../../src/net/msgcodec.c 1680>
+  430 						_zn_sync_free: void (), <../../src/net/msgcodec.c 1725>
+  431 						_zn_ack_nack_free: void (), <../../src/net/msgcodec.c 1770>
+  432 						_zn_keep_alive_free: void (), <../../src/net/msgcodec.c 1809>
+  433 						_zn_ping_pong_free: void (), <../../src/net/msgcodec.c 1842>
+  434 						_zn_frame_free: void (), <../../src/net/msgcodec.c 1921>
+  435 							_zn_payload_free: void (), <../../src/net/msgcodec.c 53>
+  436 							_zn_zenoh_message_free: void (), <../../src/net/msgcodec.c 1378>
+  437 								_zn_attachment_free: 419
+  438 								free: <>
+  439 								_zn_reply_context_free: void (), <../../src/net/msgcodec.c 358>
+  440 								_zn_declare_free: void (), <../../src/net/msgcodec.c 863>
+  441 									_zn_declaration_free: 332
+  442 									free: <>
+  443 								_zn_data_free: void (), <../../src/net/msgcodec.c 1047>
+  444 									_zn_reskey_free: 334
+  445 									_zn_data_info_free: void (), <../../src/net/msgcodec.c 982>
+  446 										_z_timestamp_free: void (), <../../src/net/msgcodec.c 90>
+  447 									_zn_payload_free: void (), <../../src/net/msgcodec.c 53>
+  448 								_zn_pull_free: void (), <../../src/net/msgcodec.c 1099>
+  449 									_zn_reskey_free: 334
+  450 								_zn_query_free: void (), <../../src/net/msgcodec.c 1259>
+  451 									_zn_reskey_free: 334
+  452 									free: <>
+  453 							_z_vec_get: 61
+  454 							_z_vec_free: void (), <../../src/collection.c 48>
+  455 								free: <>
+  456 								_z_vec_free_inner: void (), <../../src/collection.c 40>
+  457 									free: <>
+  458 					_zn_session_message_p_result_free: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 48>
+  459 						free: <>
+  460 					_z_zbuf_free: void (), <../../src/iobuf.c 203>
+  461 						_z_iosli_free: void (), <../../src/iobuf.c 102>
+  462 							free: <>
+  463 				_z_wbuf_free: void (), <../../src/iobuf.c 558>
+  464 					_z_wbuf_get_iosli: 60
+  465 					_z_iosli_free: 461
+  466 					_z_vec_free: 454
+  467 			strdup: 16
+  468 			zn_hello_array_free: void (), <../../src/net/session.c 708>
+  469 				_z_bytes_free: void (), <../../src/collection.c 365>
+  470 					free: <>
+  471 				_z_str_array_free: 425
+  472 				free: <>
+  473 			srand: <>
+  474 			time: <>
+  475 			_zn_open_tx_session: _zn_socket_result_t (), <../../src/net/unix/network.c 162>
+  476 				strdup: 16
+  477 				strtok: char * (), </usr/include/string.h 336>
+  478 				strcmp: int (), </usr/include/string.h 137>
+  479 				fprintf: <>
+  480 				exit: <>
+  481 				getaddrinfo: <>
+  482 				free: <>
+  483 				inet_ntop: const char * (), </usr/include/arpa/inet.h 64>
+  484 				freeaddrinfo: <>
+  485 				sscanf: int (), </usr/include/stdio.h 412>
+  486 				socket: int (), </usr/include/x86_64-linux-gnu/sys/socket.h 102>
+  487 				setsockopt: int (), </usr/include/x86_64-linux-gnu/sys/socket.h 215>
+  488 				__errno_location: <>
+  489 				close: <>
+  490 				memset: void * (), </usr/include/string.h 61>
+  491 				htons: <>
+  492 				inet_pton: int (), </usr/include/arpa/inet.h 58>
+  493 				connect: <>
+  494 			free: <>
+  495 			_z_bytes_make: z_bytes_t (), <../../src/collection.c 358>
+  496 				_z_bytes_init: 411
+  497 			rand: <>
+  498 			_zn_session_message_init: 69
+  499 			_zn_session_init: zn_session_t * (), <../../src/net/session.c 28>
+  500 				malloc: <>
+  501 				_z_wbuf_make: 46
+  502 				_z_zbuf_make: 206
+  503 				_z_mutex_init: int (), <../../src/net/unix/system.c 31>
+  504 					pthread_mutex_init: int (), </usr/include/pthread.h 725>
+  505 				_z_i_map_make: 6
+  506 			_zn_send_s_msg: int (), <../../src/net/internal.c 153>
+  507 				_z_mutex_lock: int (), <../../src/net/unix/system.c 41>
+  508 					pthread_mutex_lock: int (), </usr/include/pthread.h 738>
+  509 				__unsafe_zn_prepare_wbuf: void (), <../../src/net/internal.c 117>
+  510 					_z_wbuf_clear: void (), <../../src/iobuf.c 525>
+  511 						_z_iosli_clear: void (), <../../src/iobuf.c 96>
+  512 						_z_wbuf_get_iosli: 60
+  513 					_z_wbuf_put: void (), <../../src/iobuf.c 418>
+  514 						_z_vec_len: inline size_t (), <../../src/collection.c 55>
+  515 						__extension__: 52
+  516 						__assert_fail: void (), </usr/include/assert.h 69>
+  517 						_z_wbuf_get_iosli: 60
+  518 						_z_iosli_put: void (), <../../src/iobuf.c 82>
+  519 							__extension__: 52
+  520 							__assert_fail: void (), </usr/include/assert.h 69>
+  521 					_z_wbuf_set_wpos: void (), <../../src/iobuf.c 483>
+  522 						_z_vec_len: inline size_t (), <../../src/collection.c 55>
+  523 						__extension__: 52
+  524 						__assert_fail: void (), </usr/include/assert.h 69>
+  525 						_z_wbuf_get_iosli: 60
+  526 				_zn_session_message_encode: 71
+  527 				__unsafe_zn_finalize_wbuf: void (), <../../src/net/internal.c 139>
+  528 					_z_wbuf_len: size_t (), <../../src/iobuf.c 291>
+  529 						_z_wbuf_get_iosli: 60
+  530 						_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  531 					_z_wbuf_put: 513
+  532 				_zn_send_wbuf: int (), <../../src/net/unix/network.c 319>
+  533 					_z_iosli_to_bytes: 201
+  534 					_z_wbuf_get_iosli: 60
+  535 					send: <>
+  536 				_z_mutex_unlock: int (), <../../src/net/unix/system.c 51>
+  537 					pthread_mutex_unlock: <>
+  538 			_z_bytes_free: 469
+  539 			_zn_session_message_free: 418
+  540 			_zn_session_free: void (), <../../src/net/session.c 87>
+  541 				_zn_close_tx_session: void (), <../../src/net/unix/network.c 258>
+  542 					shutdown: int (), </usr/include/x86_64-linux-gnu/sys/socket.h 250>
+  543 				_zn_flush_resources: void (), <../../src/net/internal.c 981>
+  544 					_z_mutex_lock: 507
+  545 					_z_list_head: void * (), <../../src/collection.c 109>
+  546 					__unsafe_zn_free_resource: void (), <../../src/net/internal.c 941>
+  547 						_zn_reskey_free: 334
+  548 					free: <>
+  549 					_z_list_pop: _z_list_t * (), <../../src/collection.c 130>
+  550 						free: <>
+  551 					_z_mutex_unlock: 536
+  552 				_zn_flush_subscriptions: void (), <../../src/net/internal.c 1189>
+  553 					_z_mutex_lock: 507
+  554 					_z_list_head: void * (), <../../src/collection.c 109>
+  555 					__unsafe_zn_free_subscription: void (), <../../src/net/internal.c 1147>
+  556 						_zn_reskey_free: 334
+  557 						free: <>
+  558 					free: <>
+  559 					_z_list_pop: 549
+  560 					_z_i_map_free: void (), <../../src/collection.c 332>
+  561 						_z_list_head: void * (), <../../src/collection.c 109>
+  562 						free: <>
+  563 						_z_list_pop: 549
+  564 					_z_mutex_unlock: 536
+  565 				_zn_flush_queryables: void (), <../../src/net/internal.c 1887>
+  566 					_z_mutex_lock: 507
+  567 					_z_list_head: void * (), <../../src/collection.c 109>
+  568 					__unsafe_zn_free_queryable: void (), <../../src/net/internal.c 1850>
+  569 						_zn_reskey_free: 334
+  570 					free: <>
+  571 					_z_list_pop: 549
+  572 					_z_i_map_free: 560
+  573 					_z_mutex_unlock: 536
+  574 				_zn_flush_pending_queries: void (), <../../src/net/internal.c 1487>
+  575 					_z_mutex_lock: 507
+  576 					_z_list_head: void * (), <../../src/collection.c 109>
+  577 					__unsafe_zn_free_pending_reply: void (), <../../src/net/internal.c 1413>
+  578 						free: <>
+  579 						_z_bytes_free: 469
+  580 					free: <>
+  581 					_z_list_pop: 549
+  582 					__unsafe_zn_free_pending_query: void (), <../../src/net/internal.c 1435>
+  583 						_zn_reskey_free: 334
+  584 						free: <>
+  585 						_z_list_head: void * (), <../../src/collection.c 109>
+  586 						__unsafe_zn_free_pending_reply: 577
+  587 						_z_list_pop: 549
+  588 					_z_mutex_unlock: 536
+  589 				_z_mutex_free: int (), <../../src/net/unix/system.c 36>
+  590 					pthread_mutex_destroy: <>
+  591 				_z_wbuf_free: 463
+  592 				_z_zbuf_free: 460
+  593 				_z_bytes_free: 469
+  594 				free: <>
+  595 			_zn_recv_s_msg: _zn_session_message_p_result_t (), <../../src/net/internal.c 437>
+  596 				_zn_session_message_p_result_init: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 48>
+  597 					malloc: <>
+  598 				_zn_recv_s_msg_na: void (), <../../src/net/internal.c 366>
+  599 					_z_mutex_lock: 507
+  600 					_z_zbuf_clear: 212
+  601 					_zn_recv_bytes: int (), <../../src/net/unix/network.c 293>
+  602 						recv: <>
+  603 					_zn_session_message_p_result_free: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 48>
+  604 						free: <>
+  605 					_z_zbuf_set_wpos: 219
+  606 					_z_zbuf_read: 227
+  607 					_z_zbuf_capacity: size_t (), <../../src/iobuf.c 125>
+  608 					_z_zbuf_len: 235
+  609 					_z_zbuf_set_rpos: 238
+  610 					_zn_session_message_decode_na: 226
+  611 					_z_mutex_unlock: 536
+  612 			_zn_session_close: int (), <../../src/net/session.c 143>
+  613 				_zn_send_close: int (), <../../src/net/session.c 126>
+  614 					_zn_session_message_init: 69
+  615 					_zn_send_s_msg: 506
+  616 					_zn_session_message_free: 418
+  617 				_zn_session_free: 540
+  618 			_z_bytes_move: void (), <../../src/collection.c 376>
+  619 			_z_bytes_copy: 410
+  620 			_zn_default_on_disconnect: void (), <../../src/net/session.c 152>
+  621 				_z_sleep_s: int (), <../../src/net/unix/system.c 90>
+  622 					sleep: <>
+  623 				_zn_open_tx_session: 475
+  624 			_zn_session_message_p_result_free: 458
+  625 		exit: <>
+  626 		znp_start_read_task: int (), <../../src/net/read_task.c 125>
+  627 			malloc: <>
+  628 			memset: void * (), </usr/include/string.h 61>
+  629 			_z_task_init: int (), <../../src/net/unix/system.c 23>
+  630 				pthread_create: int (), </usr/include/pthread.h 198>
+  631 			_znp_read_task: void * (), <../../src/net/read_task.c 22>
+  632 				_zn_session_message_p_result_init: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 48>
+  633 					malloc: <>
+  634 				_z_mutex_lock: 507
+  635 				_z_zbuf_clear: 212
+  636 				_z_zbuf_len: 235
+  637 				_z_zbuf_compact: void (), <../../src/iobuf.c 192>
+  638 					_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  639 					memcpy: void * (), </usr/include/string.h 43>
+  640 					_z_zbuf_get_rptr: uint8_t * (), <../../src/iobuf.c 177>
+  641 					_z_zbuf_set_rpos: 238
+  642 					_z_zbuf_set_wpos: 219
+  643 				_zn_recv_zbuf: int (), <../../src/net/unix/network.c 310>
+  644 					recv: <>
+  645 					_z_zbuf_get_wptr: uint8_t * (), <../../src/iobuf.c 182>
+  646 					_z_zbuf_space_left: 217
+  647 					_z_zbuf_set_wpos: 219
+  648 					_z_zbuf_get_wpos: size_t (), <../../src/iobuf.c 160>
+  649 				_z_zbuf_read: 227
+  650 				_z_zbuf_view: _z_zbuf_t (), <../../src/iobuf.c 117>
+  651 					_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  652 					__extension__: 52
+  653 					__assert_fail: void (), </usr/include/assert.h 69>
+  654 					_z_iosli_wrap: 51
+  655 					_z_zbuf_get_rptr: uint8_t * (), <../../src/iobuf.c 177>
+  656 				_zn_session_message_decode_na: 226
+  657 				_zn_handle_session_message: int (), <../../src/net/session.c 499>
+  658 					_zn_session_free: 540
+  659 					_zn_sn_precedes: int (), <../../src/net/internal.c 103>
+  660 					_z_wbuf_reset: void (), <../../src/iobuf.c 535>
+  661 						_z_wbuf_get_iosli: 60
+  662 						_z_iosli_free: 461
+  663 						_z_vec_free: 454
+  664 						_z_vec_make: 47
+  665 					_z_wbuf_add_iosli_from: 85
+  666 					_z_wbuf_to_zbuf: _z_zbuf_t (), <../../src/iobuf.c 502>
+  667 						_z_wbuf_len: 528
+  668 						_z_zbuf_make: 206
+  669 						_z_wbuf_get_iosli: 60
+  670 						_z_iosli_write_bytes: 93
+  671 						_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  672 					_zn_zenoh_message_decode: 244
+  673 					_zn_handle_zenoh_message: int (), <../../src/net/session.c 329>
+  674 						_zn_trigger_query_reply_partial: void (), <../../src/net/internal.c 1511>
+  675 							_z_mutex_lock: 507
+  676 							__unsafe_zn_get_pending_query_by_id: _zn_pending_query_t * (), <../../src/net/internal.c 1367>
+  677 								_z_list_head: void * (), <../../src/collection.c 109>
+  678 								_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  679 							_z_timestamp_reset: void (), <../../src/net/internal.c 41>
+  680 								_z_bytes_reset: void (), <../../src/collection.c 385>
+  681 							__unsafe_zn_get_resource_name_from_key: z_str_t (), <../../src/net/internal.c 499>
+  682 								strdup: 16
+  683 								strlen: <>
+  684 								_z_list_cons: 11
+  685 								__unsafe_zn_get_resource_by_id: _zn_resource_t * (), <../../src/net/internal.c 457>
+  686 									_z_list_head: void * (), <../../src/collection.c 109>
+  687 									_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  688 								_z_list_free: void (), <../../src/collection.c 205>
+  689 									_z_list_pop: 549
+  690 								malloc: <>
+  691 								_z_list_head: void * (), <../../src/collection.c 109>
+  692 								strcat: char * (), </usr/include/string.h 130>
+  693 								_z_list_pop: 549
+  694 							strlen: <>
+  695 							_z_list_head: void * (), <../../src/collection.c 109>
+  696 							strcmp: int (), </usr/include/string.h 137>
+  697 							free: <>
+  698 							__unsafe_zn_free_pending_reply: 577
+  699 							_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  700 							malloc: <>
+  701 							_z_bytes_copy: 410
+  702 							strdup: 16
+  703 							_z_timestamp_clone: z_timestamp_t (), <../../src/net/internal.c 33>
+  704 								_z_bytes_copy: 410
+  705 							_z_list_cons: 11
+  706 							_z_bytes_reset: void (), <../../src/collection.c 385>
+  707 							_z_mutex_unlock: 536
+  708 						_zn_trigger_subscriptions: void (), <../../src/net/internal.c 1215>
+  709 							_z_mutex_lock: 507
+  710 							__unsafe_zn_get_resource_by_id: 685
+  711 							__unsafe_zn_get_resource_name_from_key: 681
+  712 							strlen: <>
+  713 							_z_i_map_get: 26
+  714 							_z_list_head: void * (), <../../src/collection.c 109>
+  715 							_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  716 							free: <>
+  717 							zn_rname_intersect: int (), <../../src/net/rname.c 66>
+  718 								zn_rname_intersect: 717
+  719 								next: const char * (), <../../src/net/rname.c 58>
+  720 									strchr: char * (), </usr/include/string.h 226>
+  721 								chunk_intersect: int (), <../../src/net/rname.c 51>
+  722 									sub_chunk_intersect: <>
+  723 							_z_mutex_unlock: 536
+  724 						malloc: <>
+  725 						strdup: 16
+  726 						_zn_register_resource: int (), <../../src/net/internal.c 898>
+  727 							_z_mutex_lock: 507
+  728 							__unsafe_zn_get_resource_by_id: 685
+  729 							_z_list_cons: 11
+  730 							__unsafe_zn_add_rem_res_to_loc_sub_map: void (), <../../src/net/internal.c 713>
+  731 								__unsafe_zn_get_subscriptions_from_remote_key: _z_list_t * (), <../../src/net/internal.c 609>
+  732 									_z_i_map_get: 26
+  733 									_z_list_head: void * (), <../../src/collection.c 109>
+  734 									_z_list_cons: 11
+  735 									_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  736 									__unsafe_zn_get_resource_name_from_key: 681
+  737 									_z_list_free: 688
+  738 									zn_rname_intersect: 717
+  739 									free: <>
+  740 									__unsafe_zn_get_resource_by_id: 685
+  741 								_z_i_map_get: 26
+  742 								_z_list_free: 688
+  743 								_z_i_map_set: 9
+  744 							__unsafe_zn_add_rem_res_to_loc_qle_map: void (), <../../src/net/internal.c 839>
+  745 								__unsafe_zn_get_queryables_from_remote_key: _z_list_t * (), <../../src/net/internal.c 736>
+  746 									_z_i_map_get: 26
+  747 									_z_list_head: void * (), <../../src/collection.c 109>
+  748 									_z_list_cons: 11
+  749 									_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  750 									__unsafe_zn_get_resource_name_from_key: 681
+  751 									_z_list_free: 688
+  752 									zn_rname_intersect: 717
+  753 									free: <>
+  754 									__unsafe_zn_get_resource_by_id: 685
+  755 								_z_i_map_get: 26
+  756 								_z_list_free: 688
+  757 								_z_i_map_set: 9
+  758 							_z_mutex_unlock: 536
+  759 						_zn_reskey_free: 334
+  760 						free: <>
+  761 						_zn_get_subscriptions_from_remote_key: _z_list_t * (), <../../src/net/internal.c 1097>
+  762 							_z_mutex_lock: 507
+  763 							__unsafe_zn_get_subscriptions_from_remote_key: 731
+  764 							_z_mutex_unlock: 536
+  765 						_z_list_len: size_t (), <../../src/collection.c 119>
+  766 							_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  767 						_zn_zenoh_message_init: _zn_zenoh_message_t (), <../../src/net/internal.c 56>
+  768 							memset: void * (), </usr/include/string.h 61>
+  769 						_z_list_head: void * (), <../../src/collection.c 109>
+  770 						_z_list_pop: 549
+  771 						_zn_send_z_msg: int (), <../../src/net/internal.c 256>
+  772 							_z_mutex_lock: 507
+  773 							_z_mutex_trylock: int (), <../../src/net/unix/system.c 46>
+  774 								pthread_mutex_trylock: int (), </usr/include/pthread.h 734>
+  775 							__unsafe_zn_prepare_wbuf: 509
+  776 							__unsafe_zn_get_sn: z_zint_t (), <../../src/net/internal.c 86>
+  777 							__zn_frame_header: _zn_session_message_t (), <../../src/net/internal.c 184>
+  778 								_zn_session_message_init: 69
+  779 							_zn_session_message_encode: 71
+  780 							_zn_zenoh_message_encode: 104
+  781 							__unsafe_zn_finalize_wbuf: 527
+  782 							_zn_send_wbuf: 532
+  783 							_z_wbuf_make: 46
+  784 							_z_wbuf_len: 528
+  785 							__unsafe_zn_serialize_zenoh_fragment: int (), <../../src/net/internal.c 220>
+  786 								_z_wbuf_get_wpos: size_t (), <../../src/iobuf.c 450>
+  787 									_z_wbuf_get_iosli: 60
+  788 								__zn_frame_header: 777
+  789 								_zn_session_message_encode: 71
+  790 								_z_wbuf_space_left: size_t (), <../../src/iobuf.c 302>
+  791 									_z_wbuf_get_iosli: 60
+  792 									_z_iosli_writable: size_t (), <../../src/iobuf.c 64>
+  793 								_z_wbuf_len: 528
+  794 								_z_wbuf_set_wpos: 521
+  795 								_z_wbuf_copy_into: int (), <../../src/iobuf.c 514>
+  796 									_z_wbuf_write: 73
+  797 									__z_wbuf_read: uint8_t (), <../../src/iobuf.c 308>
+  798 										__extension__: 52
+  799 										__assert_fail: void (), </usr/include/assert.h 69>
+  800 										_z_wbuf_get_iosli: 60
+  801 										_z_iosli_readable: size_t (), <../../src/iobuf.c 40>
+  802 										_z_iosli_read: 228
+  803 							_z_wbuf_free: 463
+  804 							_z_mutex_unlock: 536
+  805 						_zn_zenoh_message_free: 436
+  806 						_zn_get_subscription_by_key: _zn_subscriber_t * (), <../../src/net/internal.c 1059>
+  807 							_z_mutex_lock: 507
+  808 							__unsafe_zn_get_subscription_by_key: _zn_subscriber_t * (), <../../src/net/internal.c 1033>
+  809 								_z_list_head: void * (), <../../src/collection.c 109>
+  810 								strcmp: int (), </usr/include/string.h 137>
+  811 								_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  812 							_z_mutex_unlock: 536
+  813 						_zn_get_entity_id: z_zint_t (), <../../src/net/internal.c 446>
+  814 						_zn_register_subscription: int (), <../../src/net/internal.c 1107>
+  815 							_z_mutex_lock: 507
+  816 							__unsafe_zn_get_subscription_by_key: 808
+  817 							__unsafe_zn_add_loc_sub_to_rem_res_map: void (), <../../src/net/internal.c 1074>
+  818 								__unsafe_zn_get_resource_name_from_key: 681
+  819 								__unsafe_zn_get_resource_matching_key: _zn_resource_t * (), <../../src/net/internal.c 560>
+  820 									__unsafe_zn_get_resource_name_from_key: 681
+  821 									_z_list_head: void * (), <../../src/collection.c 109>
+  822 									zn_rname_intersect: 717
+  823 									free: <>
+  824 									_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  825 								_z_i_map_get: 26
+  826 								_z_list_cons: 11
+  827 								_z_i_map_set: 9
+  828 								free: <>
+  829 							_z_list_cons: 11
+  830 							_z_mutex_unlock: 536
+  831 						_zn_get_resource_by_id: _zn_resource_t * (), <../../src/net/internal.c 862>
+  832 							_z_mutex_lock: 507
+  833 							__unsafe_zn_get_resource_by_id: 685
+  834 							_z_mutex_unlock: 536
+  835 						_zn_unregister_resource: void (), <../../src/net/internal.c 966>
+  836 							_z_mutex_lock: 507
+  837 							_z_list_remove: _z_list_t * (), <../../src/collection.c 163>
+  838 								free: <>
+  839 							__unsafe_zn_resource_predicate: int (), <../../src/net/internal.c 951>
+  840 								__unsafe_zn_free_resource: 546
+  841 							free: <>
+  842 							_z_mutex_unlock: 536
+  843 						_zn_unregister_subscription: void (), <../../src/net/internal.c 1174>
+  844 							_z_mutex_lock: 507
+  845 							_z_list_remove: 837
+  846 							__unsafe_zn_subscription_predicate: int (), <../../src/net/internal.c 1159>
+  847 								__unsafe_zn_free_subscription: 555
+  848 							free: <>
+  849 							_z_mutex_unlock: 536
+  850 						_zn_trigger_queryables: void (), <../../src/net/internal.c 1905>
+  851 							_z_mutex_lock: 507
+  852 							__unsafe_zn_get_resource_by_id: 685
+  853 							__unsafe_zn_get_resource_name_from_key: 681
+  854 							_z_i_map_get: 26
+  855 							_z_list_head: void * (), <../../src/collection.c 109>
+  856 							_z_list_tail: _z_list_t * (), <../../src/collection.c 114>
+  857 							free: <>
+  858 							zn_rname_intersect: 717
+  859 							_zn_zenoh_message_init: 767
+  860 							_zn_reply_context_init: _zn_reply_context_t * (), <../../src/net/internal.c 64>
+  861 								malloc: <>
+  862 								memset: void * (), </usr/include/string.h 61>
+  863 							_zn_send_z_msg: 771
+  864 							_zn_zenoh_message_free: 436
+  865 							_z_mutex_unlock: 536
+  866 						_zn_trigger_query_reply_final: void (), <../../src/net/internal.c 1706>
+  867 							_z_mutex_lock: 507
+  868 							__unsafe_zn_get_pending_query_by_id: 676
+  869 							_z_list_head: void * (), <../../src/collection.c 109>
+  870 							__unsafe_zn_free_pending_reply: 577
+  871 							free: <>
+  872 							_z_list_pop: 549
+  873 							memset: void * (), </usr/include/string.h 61>
+  874 							__unsafe_zn_unregister_pending_query: void (), <../../src/net/internal.c 1474>
+  875 								_z_list_remove: 837
+  876 								__unsafe_zn_pending_query_predicate: int (), <../../src/net/internal.c 1454>
+  877 									__unsafe_zn_free_pending_query: 582
+  878 								free: <>
+  879 							_z_mutex_unlock: 536
+  880 					_zn_zenoh_message_free: 436
+  881 					_zn_zenoh_message_p_result_free: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 64>
+  882 						free: <>
+  883 					_z_zbuf_free: 460
+  884 					_z_vec_len: inline size_t (), <../../src/collection.c 55>
+  885 					_z_vec_get: 61
+  886 				_zn_session_message_free: 418
+  887 				_z_zbuf_set_rpos: 238
+  888 				_z_zbuf_get_rpos: size_t (), <../../src/iobuf.c 155>
+  889 				_z_mutex_unlock: 536
+  890 				_zn_session_message_p_result_free: inline void (), <../../include/zenoh-pico/net/private/msgcodec.h 48>
+  891 					free: <>
+  892 		znp_start_lease_task: int (), <../../src/net/lease_task.c 90>
+  893 			malloc: <>
+  894 			memset: void * (), </usr/include/string.h 61>
+  895 			_z_task_init: 629
+  896 			_znp_lease_task: void * (), <../../src/net/lease_task.c 20>
+  897 				_z_sleep_ms: int (), <../../src/net/unix/system.c 85>
+  898 					usleep: <>
+  899 				_zn_session_close: 612
+  900 				znp_send_keep_alive: int (), <../../src/net/session.c 1610>
+  901 					_zn_session_message_init: 69
+  902 					_zn_send_s_msg: 506
+  903 		zn_declare_resource: z_zint_t (), <../../src/net/session.c 989>
+  904 			malloc: <>
+  905 			_zn_get_resource_id: z_zint_t (), <../../src/net/internal.c 857>
+  906 			_zn_register_resource: 726
+  907 			free: <>
+  908 			_zn_zenoh_message_init: 767
+  909 			_zn_reskey_clone: zn_reskey_t (), <../../src/net/internal.c 25>
+  910 				strdup: 16
+  911 			_zn_send_z_msg: 771
+  912 			_zn_zenoh_message_free: 436
+  913 		zn_rname: zn_reskey_t (), <../../src/net/session.c 964>
+  914 			strdup: 16
+  915 		zn_rid: zn_reskey_t (), <../../src/net/session.c 972>
+  916 		zn_declare_publisher: zn_publisher_t * (), <../../src/net/session.c 1057>
+  917 			malloc: <>
+  918 			_zn_get_entity_id: z_zint_t (), <../../src/net/internal.c 446>
+  919 			_zn_zenoh_message_init: 767
+  920 			_zn_reskey_clone: 909
+  921 			_zn_send_z_msg: 771
+  922 			_zn_zenoh_message_free: 436
+  923 		sleep: <>
+  924 		sprintf: int (), </usr/include/stdio.h 334>
+  925 		zn_write: int (), <../../src/net/session.c 1250>
+  926 			_zn_zenoh_message_init: 767
+  927 			_zn_send_z_msg: 771
+  928 		strlen: <>
+  929 		zn_undeclare_publisher: void (), <../../src/net/session.c 1091>
+  930 			_zn_zenoh_message_init: 767
+  931 			malloc: <>
+  932 			_zn_reskey_clone: 909
+  933 			_zn_send_z_msg: 771
+  934 			_zn_zenoh_message_free: 436
+  935 			free: <>
+  936 		zn_close: void (), <../../src/net/session.c 730>
+  937 			_zn_session_close: 612
