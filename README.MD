@@ -28,7 +28,7 @@ The scouting interface is not supported in the uC side but can be executed by th
 Message Types : Client2Proxy , Proxy2Client
 - TCP open (C2P) and close (C2P)
 - TCP send (C2P) and recv (P2C)
-- TCP disconnect (C2P)
+- TCP connected & disconnected (P2C)
 
 # Testing & development approach 
 - Run a serial loopback via 2 USB FTDI cross-connected and develop client and proxy on same platform for easy debugging
@@ -38,3 +38,15 @@ Message Types : Client2Proxy , Proxy2Client
 - Validate Arduino approach on maple mini 
 - Use PlatformIo as easy porting tool
 - SPI or I2C on Raspberry Pi ? 
+
+# Build instructions
+- download zenoh-pico at the same level as this repository
+```
+mkdir build
+cd build
+cmake ..
+- connect FTDI back to back 
+./proxy /dev/ttyUSB0 115200
+./loopback /dev/ttyUSB1 115200
+
+```
