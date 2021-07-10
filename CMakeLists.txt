@@ -56,7 +56,10 @@ target_sources(proxy PRIVATE src/proxy.cpp
   ${PICO_SRCS} 
   src/serial.cpp 
   src/config.cpp 
-  src/util.cpp) 
+  src/util.cpp
+  src/tcp.cpp
+  src/tcp_session.cpp
+  src/serial_session.cpp) 
 
 
 target_link_libraries(loopback 

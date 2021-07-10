@@ -5,4 +5,4 @@ typedef enum {
   TCP_RECV = 'R',
   TCP_CONNECTED = 'C',
   TCP_DISCONNECTED = 'D'
-} Header;
+} MsgType;

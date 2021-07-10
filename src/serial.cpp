@@ -25,11 +25,8 @@ BAUDRATE BAUDRATE_TABLE[] = {
     {2000000, B2000000}, {2500000, B2500000}, {3000000, B3000000}, //
     {3500000, B3500000}, {4000000, B4000000}};
 
-const char *signalString[] = {
-    "PIPE_ERROR", "SELECT_ERROR", "SERIAL_CONNECT", "SERIAL_DISCONNECT",
-    "SERIAL_RXD", "SERIAL_ERROR", "TIMEOUT"};
 
-const char *cmdString[] = {"MQTT-SUB", "MQTT-PUB", "MQTT-CONN", "MQTT-DISC"};
+
 #include <iostream>
 void logRaw(const string line) {
   cout << line << flush;

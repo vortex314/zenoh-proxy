@@ -46,9 +46,9 @@ int initSerial() {
   return serial.fd();
 }
 
-int sendFrame(Header h, const uint8_t *data, uint32_t length) {
+int sendFrame(uint8_t header, const uint8_t *data, uint32_t length) {
   bytes buffer;
-  buffer.push_back((uint8_t)h);
+  buffer.push_back(header);
   for (uint32_t i = 0; i < length; i++)
     buffer.push_back(data[i]);
   bytes outFrame;
@@ -82,7 +82,6 @@ _zn_socket_result_t _zn_create_udp_socket(const char *addr, int port,
                                           int timeout_usec) {
   WARN("create_udp_socket(%s,%d,%d) should not be called ", addr, port,
        timeout_usec);
-  sendFrame(UDP_OPEN, 0, 0);
   _zn_socket_result_t r;
 
   r.tag = _z_res_t_ERR;
