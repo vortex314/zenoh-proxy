@@ -17,7 +17,7 @@ using namespace std;
 typedef unsigned char byte;
 typedef std::vector<byte> bytes;
 
-bool ppp_frame(bytes &out, const bytes &in);
+bytes ppp_frame(const bytes &in);
 bool ppp_deframe(bytes &out, const bytes &in);
 
 #endif

@@ -187,10 +187,10 @@ int Serial::rxd(bytes &out) {
   }
 }
 //=====================================================================================
-int Serial::txd(bytes &buffer) {
+int Serial::txd(const bytes &buffer) {
   if (!_connected)
     return ENOTCONN;
-  uint8_t *buf;
+  const uint8_t *buf;
   size_t len;
   buf = buffer.data();
   len = buffer.size();

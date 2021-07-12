@@ -3,6 +3,6 @@ typedef enum {
   TCP_CLOSE = 'C',
   TCP_SEND = 'S',
   TCP_RECV = 'R',
-  TCP_CONNECTED = 'C',
-  TCP_DISCONNECTED = 'D'
+  TCP_CONNECTED = 'c',
+  TCP_DISCONNECTED = 'd'
 } MsgType;

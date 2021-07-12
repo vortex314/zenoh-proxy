@@ -8,12 +8,14 @@
                 "${workspaceFolder}/../limero/inc/",
                 "${workspaceFolder}/src/",
                 "${workspaceFolder}/../ArduinoJson/src",
-                "${workspaceFolder}/../zenoh-pico/include"
+                "${workspaceFolder}/../zenoh-pico/include",
+                "${workspaceFolder}/../zenoh-pico/include/zenoh-pico/net/private/system/"
             ],
             "defines": [
                 "NOTHING",
                 "__linux__",
-                "ZMQ_BUILD_DRAFT_API"
+                "ZMQ_BUILD_DRAFT_API",
+                "ZENOH_LINUX"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",

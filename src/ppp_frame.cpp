@@ -61,7 +61,8 @@ inline void addEscaped(bytes &out, byte c) {
   }
 }
 
-bool ppp_frame(std::vector<uint8_t> &out, const std::vector<uint8_t> &in) {
+bytes ppp_frame(const bytes &in) {
+  bytes out;
   Fcs fcs;
   out.clear();
   out.push_back(PPP_FLAG_CHAR);
@@ -72,7 +73,7 @@ bool ppp_frame(std::vector<uint8_t> &out, const std::vector<uint8_t> &in) {
   addEscaped(out, fcs.result() & 0xFF);  // LSB first
   addEscaped(out, fcs.result() >> 8);
   out.push_back(PPP_FLAG_CHAR);
-  return true;
+  return out;
 }
 
 /**

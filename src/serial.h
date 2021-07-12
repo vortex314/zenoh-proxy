@@ -60,7 +60,7 @@ class Serial {
   int disconnect();
   int waitForRxd(uint32_t milliSec);
   int rxd(bytes &buffer);
-  int txd(bytes &);
+  int txd(const bytes &);
 
   int modeRun();
   int modeProgram();

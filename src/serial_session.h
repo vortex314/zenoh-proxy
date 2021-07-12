@@ -13,6 +13,11 @@ class SerialSession : public Actor, public Invoker {
   int _serialfd;
   Serial _serialPort;
   string _port;
+  bytes _rxdBuffer;
+  bytes _inputFrame;
+  bytes _cleanData;
+  uint64_t _lastFrameFlag;
+  uint64_t _frameTimeout = 2000;
 
 public:
   ValueSource<bytes> incoming;
@@ -29,6 +34,9 @@ public:
   void onError();
   int fd();
   void invoke();
+  void handleRxd(bytes &);
+  bool handleFrame(bytes &);
+  void toStdout(bytes &);
 };
 
 class SerialSessionError : public Invoker {

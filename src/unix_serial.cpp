@@ -51,13 +51,16 @@ int sendFrame(uint8_t header, const uint8_t *data, uint32_t length) {
   buffer.push_back(header);
   for (uint32_t i = 0; i < length; i++)
     buffer.push_back(data[i]);
-  bytes outFrame;
-  ppp_frame(outFrame, buffer);
+  bytes outFrame = ppp_frame(buffer);
   serial.txd(outFrame);
   return length;
 }
 
-int recvData(uint8_t *buffer, uint32_t capacity) { return 0; }
+int recvData(uint8_t *buffer, uint32_t capacity) {
+  bytes buf(buffer, buffer + capacity);
+  serial.rxd(buf);
+  return 0;
+}
 
 //===============================
 
@@ -68,7 +71,7 @@ void dump(const char *prefix, const uint8_t *data, uint32_t length) {
 
 /*------------------ Interfaces and sockets ------------------*/
 char *_zn_select_scout_iface() {
-   static  char unknown[256]="UNKNOWN";
+  static char unknown[256] = "UNKNOWN";
   ERROR("_zn_select_scout_iface() should not be called ! ");
   return unknown;
 }
