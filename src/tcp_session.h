@@ -4,19 +4,30 @@
 #include "tcp.h"
 #include "util.h"
 
-class TcpSession : public Actor {
+class TcpSessionError;
+
+class TcpSession : public Actor, public Invoker {
   int _socket;
+  TcpSessionError *_errorInvoker;
 
 public:
   ValueSource<bytes> incoming;
   Sink<bytes> outgoing;
   ValueSource<bool> connected;
   ValueSource<bool> disconnected;
-  TcpSession(Thread &thread, Config config) : Actor(thread), outgoing(10){};
+  TcpSession(Thread &, Config ) ;
   bool connect();
   bool disconnect();
   void onError();
-  void onRxd();
+  void invoke();
   int fd();
+};
+
+class TcpSessionError : public Invoker {
+  TcpSession &_tcpSession;
+
+public:
+  TcpSessionError(TcpSession &tcpSession) : _tcpSession(tcpSession){};
+  void invoke() { _tcpSession.onError(); }
 };
 #endif

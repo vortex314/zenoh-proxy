@@ -33,7 +33,7 @@ extern "C" {
 #include <serial_protocol.h>
 
 using namespace std;
-const char *port = "/dev/ttyUSB0";
+const char *port = "/dev/ttyUSB1";
 static Serial serial;
 
 int initSerial() {

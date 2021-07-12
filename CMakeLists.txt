@@ -3,7 +3,7 @@ project(spine)
 
 include(GNUInstallDirs)
 
-add_definitions(-DZENOH_LINUX -DZENOH_TRANSPORT_UDP_IP -DZENOH_DEBUG=1)
+add_definitions(-DZENOH_LINUX -DZENOH_TRANSPORT_UDP_IP -DZENOH_DEBUG=1 -DLINUX)
 set (ZENOH_TRANSPORT_UDP "ON")
 
 

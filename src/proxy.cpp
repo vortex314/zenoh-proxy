@@ -24,10 +24,9 @@ typedef enum {
   EV_SERIAL_DISCONNECTED
 } EventType;
 
-
 Config loadConfig(int argc, char **argv) { return Config(); };
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { 
 
   Config config = loadConfig(argc, argv);
   Thread workerThread("worker");
@@ -40,16 +39,13 @@ int main(int argc, char **argv) {
 
   serial.init();
   serial.connect();
-  serial.disconnect();
-  tcp.connect();
-  tcp.disconnect();
-
-  return 0;
-
   tcp.incoming >> serial.outgoing;
   serial.incoming >> tcp.outgoing;
-  tcp.disconnected >> [&](const bool& state){
-    serial.sendEvent(TCP_DISCONNECTED);
+  tcp.connected >> [&](const bool &isConnected) {
+    if (isConnected)
+      serial.sendEvent(TCP_CONNECTED);
+    else
+      serial.sendEvent(TCP_DISCONNECTED);
   };
   serial.command >> [&](const TcpCommand &cmd) {
     if (cmd == CMD_OPEN)
@@ -58,4 +54,7 @@ int main(int argc, char **argv) {
       tcp.disconnect();
   };
   workerThread.run();
+  serial.disconnect();
+  tcp.connect();
+  tcp.disconnect();
 }

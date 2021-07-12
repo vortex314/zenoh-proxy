@@ -1,6 +1,11 @@
 #include <ppp_frame.h>
 #include <serial_session.h>
 
+SerialSession::SerialSession(Thread &thread, Config config)
+    : Actor(thread), outgoing(10) {
+  _errorInvoker = new SerialSessionError(*this);
+}
+
 bool SerialSession::init() {
   _port = "/dev/ttyUSB0";
   _serialPort.port(_port.c_str());
@@ -11,6 +16,8 @@ bool SerialSession::init() {
 
 bool SerialSession::connect() {
   _serialPort.connect();
+  thread().addReadInvoker(_serialPort.fd(), this);
+  thread().addErrorInvoker(_serialPort.fd(), _errorInvoker);
   return true;
 }
 
@@ -34,7 +41,7 @@ int SerialSession::sendFrame(uint8_t header, bytes &data) {
   return _serialPort.txd(outFrame);
 }
 
-void SerialSession::onRxd() {
+void SerialSession::invoke() {
   bytes rxdBuffer;
   _serialPort.rxd(rxdBuffer);
   // TODO handle data for frames

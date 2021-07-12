@@ -9,7 +9,11 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/../build/${fileBasenameNoExtension}",
-            "args": [],
+            "args": [
+                "/topic/aaa",
+                "valueBBBB",
+                "tcp/localhost:7447"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
