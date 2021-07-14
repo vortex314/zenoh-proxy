@@ -7,7 +7,8 @@ TcpSession::TcpSession(Thread &thread, Config config)
           10,
           [&](const bytes &data) {
             int rc = send(_socket, data.data(), data.size(), MSG_NOSIGNAL);
-            if ( rc < 0 ) WARN("TCP recv() %d %d:%s", rc, errno, strerror(errno));
+            if (rc < 0)
+              WARN("TCP recv() %d %d:%s", rc, errno, strerror(errno));
           },
           "tcp.outgoing") {
   _errorInvoker = new TcpSessionError(*this);
@@ -45,17 +46,17 @@ void TcpSession::invoke() {
   size_t len = 512;
   bytes rxd;
   rxd.reserve(512);
-  INFO(" TCP RXD ");
   int rb = recv(_socket, data, 512, 0);
   if (rb > 0) {
     bytes msg(data, data + rb);
-    INFO("TCP RXD %s ",hexDump(msg).c_str());
+    INFO("TCP RXD %s ", hexDump(msg).c_str());
     incoming.emit(msg);
-  }
-  else if (rb < 0)
+  } else if (rb < 0) {
     WARN("TCP recv() %d %d:%s", rb, errno, strerror(errno));
-  else {
+    disconnect();
+  } else {
     WARN("TCP recv()=0 ");
+    disconnect();
   }
 }
 

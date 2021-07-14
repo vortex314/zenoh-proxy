@@ -2,8 +2,10 @@
 #include <serial_session.h>
 
 SerialSession::SerialSession(Thread &thread, Config config)
-    : Actor(thread),
-      outgoing(10, [&](const bytes &data) { _serialPort.txd(data); }) {
+    : Actor(thread), outgoing(10, [&](const bytes &data) {
+        INFO("TXD %s => %s", _serialPort.port().c_str(), hexDump(data).c_str());
+        _serialPort.txd(data);
+      }) {
   _errorInvoker = new SerialSessionError(*this);
 }
 

@@ -8,6 +8,8 @@ set (ZENOH_TRANSPORT_UDP "ON")
 
 
 set(PICO /home/lieven/workspace/zenoh-pico)
+set(ZENOHC /home/lieven/workspace/zenoh-c)
+
 set(PICO_SRCS ${PICO}/src/codec.c 
   ${PICO}/src/collection.c
   ${PICO}/src/iobuf.c
@@ -31,6 +33,7 @@ include_directories(
   ${PICO}/include
 ../limero/inc 
 ../limero/linux  
+../cbor11
 /home/lieven/workspace/ArduinoJson/src )
 
 add_definitions(-DCATCH_CONFIG_DISABLE)
@@ -41,18 +44,20 @@ set (CMAKE_CXX_STANDARD 11)
 
  
 # set up our program
-add_executable(loopback)
+add_executable(serial_client)
 add_executable(proxy)
+add_executable(proxy-rpc)
 
 
 # declare our source files
-target_sources(loopback PRIVATE src/loopback.cpp  
+target_sources(serial_client PRIVATE src_client/serial_client.cpp  
   src/serial.cpp  
   src/ppp_frame.cpp
   ${PICO_SRCS} 
   src/config.cpp 
-  src/unix_serial.cpp 
+  src_client/unix_serial.cpp 
   src/util.cpp )
+
 target_sources(proxy PRIVATE src/proxy.cpp 
   src/ppp_frame.cpp 
   ${PICO_SRCS} 
@@ -63,8 +68,17 @@ target_sources(proxy PRIVATE src/proxy.cpp
   src/tcp_session.cpp
   src/serial_session.cpp) 
 
+target_sources(proxy-rpc PRIVATE src/proxy-rpc.cpp 
+  src/ppp_frame.cpp 
+  src/serial.cpp 
+  src/config.cpp 
+  src/util.cpp
+  src/serial_session.cpp
+  src/zenoh_session.cpp
+  ../cbor11/cbor11.cpp ) 
 
-target_link_libraries(loopback 
+
+target_link_libraries(serial_client 
 -L/home/lieven/workspace/limero/linux/build -llimero 
 -lpthread  
 -lrt  
@@ -72,6 +86,14 @@ target_link_libraries(loopback
 
 target_link_libraries(proxy 
 -L/home/lieven/workspace/limero/linux/build -llimero 
+-lpthread  
+-lrt  
+-latomic)
+
+
+target_link_libraries(proxy-rpc 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-L/usr/local/lib/ -lzenohc
 -lpthread  
 -lrt  
 -latomic)

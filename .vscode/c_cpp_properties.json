@@ -8,6 +8,7 @@
                 "${workspaceFolder}/../limero/inc/",
                 "${workspaceFolder}/src/",
                 "${workspaceFolder}/../ArduinoJson/src",
+                "${workspaceFolder}/../cbor11",
                 "${workspaceFolder}/../zenoh-pico/include",
                 "${workspaceFolder}/../zenoh-pico/include/zenoh-pico/net/private/system/"
             ],
