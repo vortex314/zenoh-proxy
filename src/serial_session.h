@@ -28,15 +28,9 @@ public:
   bool init();
   bool connect();
   bool disconnect();
-  bool send(bytes);
-  bool sendEvent(uint8_t);
-  int sendFrame(uint8_t header, bytes &data);
   void onError();
   int fd();
   void invoke();
-  void handleRxd(bytes &);
-  bool handleFrame(bytes &);
-  void toStdout(bytes &);
 };
 
 class SerialSessionError : public Invoker {

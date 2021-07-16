@@ -29,13 +29,14 @@ public:
 
   Session(Thread &, Config &);
   int scout();
-  int open(Properties &);
+  int open();
   void close();
   Properties &info();
   int subscribe(string);
   static void dataHandler(const zn_sample_t *, const void *);
   int publish(string topic, bytes &);
   ResourceKey resource(string topic);
+  vector<Message> query(string);
 };
 
 class Resource {};

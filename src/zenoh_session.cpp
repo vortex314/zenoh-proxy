@@ -5,10 +5,9 @@ using namespace zenoh;
 
 void Session::dataHandler(const zn_sample_t *sample, const void *arg) {
   Session *session = (Session *)arg;
-
   string key(sample->key.val, sample->key.len);
   bytes data(sample->value.val, sample->value.val + sample->value.len);
-  INFO(" RXD : %s : %s ", key.c_str(), hexDump(data).c_str());
+  INFO(" ZENOH RXD : %s : %s ", key.c_str(), hexDump(data).c_str());
   session->incoming.emit({key, data});
 }
 
@@ -20,7 +19,7 @@ int Session::scout() {
   //  zn_properties_insert(config, ZN_CONFIG_PEER_KEY, us_west);
   zn_properties_insert(config, ZN_CONFIG_LISTENER_KEY, us_west);
 
-  zn_hello_array_t hellos = zn_scout(ZN_ROUTER | ZN_PEER, config, 1000);
+  zn_hello_array_t hellos = zn_scout(ZN_ROUTER | ZN_PEER, config, 3000);
   if (hellos.len > 0) {
     for (unsigned int i = 0; i < hellos.len; ++i) {
       zn_hello_t hello = hellos.val[i];
@@ -45,14 +44,14 @@ int Session::scout() {
   return 0;
 }
 
-int Session::open(Properties &props) {
+int Session::open() {
   zn_properties_t *config = zn_config_default();
-  zn_properties_insert(config, ZN_CONFIG_PEER_KEY, z_string_make(US_WEST));
+  //   zn_properties_insert(config, ZN_CONFIG_LISTENER_KEY,
+  //   z_string_make(US_WEST));
 
-  if (_zenoh_session = 0)
+  if (_zenoh_session == 0) // idempotent
     _zenoh_session = zn_open(config);
-  if (_zenoh_session == 0)
-    WARN(" zn_open() failed ");
+  INFO("zn_open() %s.", _zenoh_session == 0 ? "failed" : "succeeded");
   return _zenoh_session == 0 ? -1 : 0;
 }
 
@@ -61,9 +60,9 @@ void Session::close() {
     zn_undeclare_subscriber(sub);
   }
   _subscribers.clear();
-  if (_zenoh_session)
-    zn_close(_zenoh_session);
-  _zenoh_session = NULL;
+  //  if (_zenoh_session)
+  //   zn_close(_zenoh_session);
+  // _zenoh_session = NULL;
 }
 
 int Session::subscribe(string resource) {
@@ -90,4 +89,22 @@ ResourceKey Session::resource(string topic) {
   unsigned long rc = zn_declare_resource(_zenoh_session, reskey);
   INFO(" %ld == %ld ", rc, reskey.id);
   return 0;
+}
+
+vector<Message> Session::query(string uri) {
+  vector<Message> result;
+  zn_reply_data_array_t replies = zn_query_collect(
+      _zenoh_session, zn_rname(uri.c_str()), "", zn_query_target_default(),
+      zn_query_consolidation_default());
+  for (unsigned int i = 0; i < replies.len; ++i) {
+    result.push_back(
+        {string(replies.val[i].data.key.val, replies.val[i].data.key.len),
+         bytes(replies.val[i].data.value.val,
+               replies.val[i].data.value.val + replies.val[i].data.value.len)});
+    printf(">> [Reply handler] received (%.*s, %.*s)\n",
+           (int)replies.val[i].data.key.len, replies.val[i].data.key.val,
+           (int)replies.val[i].data.value.len, replies.val[i].data.value.val);
+  }
+  zn_reply_data_array_free(replies);
+  return result;
 }

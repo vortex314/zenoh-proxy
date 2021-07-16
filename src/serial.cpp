@@ -166,6 +166,7 @@ int Serial::disconnect() {
 }
 //=====================================================================================
 int Serial::rxd(bytes &out) {
+  out.clear();
   if (!_connected)
     return ENOTCONN;
   char buffer[1024];

@@ -47,6 +47,8 @@ set (CMAKE_CXX_STANDARD 11)
 add_executable(serial_client)
 add_executable(proxy)
 add_executable(proxy-rpc)
+add_executable(zn_pubsub)
+add_executable(myBroker)
 
 
 # declare our source files
@@ -77,6 +79,10 @@ target_sources(proxy-rpc PRIVATE src/proxy-rpc.cpp
   src/zenoh_session.cpp
   ../cbor11/cbor11.cpp ) 
 
+  target_sources(myBroker PRIVATE src/broker.cpp 
+  src/util.cpp)
+
+  target_sources(zn_pubsub PRIVATE src/zn_pubsub.c )
 
 target_link_libraries(serial_client 
 -L/home/lieven/workspace/limero/linux/build -llimero 
@@ -92,6 +98,20 @@ target_link_libraries(proxy
 
 
 target_link_libraries(proxy-rpc 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-L/usr/local/lib/ -lzenohc
+-lpthread  
+-lrt  
+-latomic)
+
+
+target_link_libraries(zn_pubsub 
+-L/usr/local/lib/ -lzenohc
+-lpthread  
+-lrt  
+-latomic)
+
+target_link_libraries(myBroker 
 -L/home/lieven/workspace/limero/linux/build -llimero 
 -L/usr/local/lib/ -lzenohc
 -lpthread  

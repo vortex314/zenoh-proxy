@@ -25,6 +25,7 @@ bool SerialSession::connect() {
 }
 
 bool SerialSession::disconnect() {
+  thread().deleteInvoker(_serialPort.fd());
   _serialPort.disconnect();
   return true;
 }
@@ -36,48 +37,8 @@ void SerialSession::invoke() {
     if (_rxdBuffer.size() == 0) { // but no data
       WARN(" 0 data ");
     } else {
-      handleRxd(_rxdBuffer);
-      _rxdBuffer.clear();
+      incoming = _rxdBuffer;
     }
-  }
-}
-
-void SerialSession::handleRxd(bytes &bs) {
-  for (uint8_t b : bs) {
-    if (b == PPP_FLAG_CHAR) {
-      _lastFrameFlag = Sys::millis();
-      handleFrame(_inputFrame);
-      _inputFrame.clear();
-    } else {
-      _inputFrame.push_back(b);
-    }
-  }
-  if ((Sys::millis() - _lastFrameFlag) > _frameTimeout) {
-    //   cout << " skip  bytes " << hexDump(bs) << endl;
-    //   cout << " frame data drop " << hexDump(frameData) << flush;
-    toStdout(bs);
-    _inputFrame.clear();
-  }
-}
-
-bool SerialSession::handleFrame(bytes &bs) {
-  if (bs.size() == 0)
-    return false;
-  if (ppp_deframe(_cleanData, bs)) {
-    incoming = _cleanData;
-    return true;
-  } else {
-    toStdout(bs);
-    return false;
-  }
-}
-
-void SerialSession::toStdout(bytes &bs) {
-  if (bs.size()) {
-    //  cout << hexDump(bs) << endl;
-    fwrite("\033[32m", 5, 1, stdout);
-    fwrite(bs.data(), bs.size(), 1, stdout);
-    fwrite("\033[39m", 5, 1, stdout);
   }
 }
 

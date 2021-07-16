@@ -23,7 +23,7 @@ const char *CMD_TO_STRING[] = {"Z_OPEN",    "Z_CLOSE", "Z_SUBSCRIBE",
                                "Z_RESOURCE"};
 
 Config loadConfig(int argc, char **argv) { return Config(); };
-
+//=================================================================
 class BytesToCbor : public LambdaFlow<bytes, cbor> {
 public:
   BytesToCbor()
@@ -32,8 +32,8 @@ public:
           INFO(" msg %s", cbor::debug(msg).c_str());
           return msg.is_array();
         }){};
-} serialCbor;
-
+};
+//================================================================
 class CborFilter : public LambdaFlow<cbor, cbor> {
   int _msgType;
 
@@ -47,7 +47,7 @@ public:
   };
   static CborFilter &nw(int msgType) { return *new CborFilter(msgType); }
 };
-
+//================================================================
 class FrameExtractor : public Flow<bytes, bytes> {
   bytes _inputFrame;
   bytes _cleanData;
@@ -96,8 +96,8 @@ public:
     }
   }
   void request(){};
-} getFrame;
-
+};
+//=========================================================================
 class FrameGenerator : public LambdaFlow<cbor, bytes> {
 public:
   FrameGenerator()
@@ -105,93 +105,144 @@ public:
           out = ppp_frame(cbor::encode(in));
           return true;
         }){};
-} toFrame;
+};
+//=========================================================================
 
-class SerialMock : public Actor {
-  vector<cbor> sequence = {
+class SerialMock : public Actor, public Invoker {
+  vector<cbor> testScenario = {
       cbor::array{Z_OPEN}, //
-      cbor::array{Z_SUBSCRIBE, "/demo/aaa"},
-      cbor::array{Z_SUBSCRIBE, "/@/**"},
-      cbor::array{Z_PUBLISH, "/demo/aaa", cbor::binary{0x13, 0x14}},
+      cbor::array{Z_SUBSCRIBE, "/mock/alive"},
+      cbor::array{Z_SUBSCRIBE, "/@/router/**"},
+      cbor::array{Z_PUBLISH, "/mock/alive", cbor::encode(Sys::millis())},
       cbor::array{Z_RESOURCE, "/demo/aaa", 0},
       cbor::array{Z_RESOURCE, "demo/aaa", 0},
       cbor::array{Z_RESOURCE, "/demo/aaa", 0},
-      cbor::array{Z_CLOSE}
+      cbor::array{Z_CLOSE} //
   };
   int counter = 0;
+  Serial _serial;
+  bytes _rxdBuffer;
 
 public:
-  ValueFlow<bytes> incoming;
-  Sink<bytes> outgoing;
+  ValueFlow<bytes> outgoing;
+  ValueSource<bytes> incoming;
   ValueSource<bool> connected;
+  BytesToCbor frameToCbor;
   TimerSource ticker;
-  SerialMock(Thread &thread, Config &cfg)
-      : Actor(thread),
-        outgoing(
-            10, [&](const bytes &bs) { INFO("TXD : %s", hexDump(bs).c_str()); },
-            "serial.outgoing"),
-        ticker(thread, 100, true, "ticker") {
+  FrameExtractor bytesToFrame;
+  FrameGenerator toFrame;
+  SerialMock(Thread &thr, Config &cfg)
+      : Actor(thr),
+        ticker(thr, 100, true, "ticker") {
+    _serial.port("/dev/ttyUSB1");
+    _serial.baudrate(115200);
+    _serial.init();
+    _serial.connect();
+    thread().addReadInvoker(_serial.fd(), this);
+
+    incoming >> bytesToFrame
+ >> frameToCbor;
+    frameToCbor >> [&](const cbor &cb) {
+      INFO(" client received %s ", cbor::debug(cb).c_str());
+    };
+
+    outgoing >> [&](const bytes &frame) {
+      INFO(" MOCK TXD %s ", hexDump(frame).c_str());
+      _serial.txd(frame);
+    };
     ticker >> [&](const TimerMsg &tm) {
-      if (counter < sequence.size()) {
-        incoming = ppp_frame(cbor::encode(sequence[counter]));
+      if (counter < testScenario.size()) {
+        outgoing = ppp_frame(cbor::encode(testScenario[counter]));
         counter++;
+      } else {
+        counter = 0;
       }
     };
+    thread().enqueue(this);
+  }
+  void invoke() {
+    INFO(" reading data");
+    int rc = _serial.rxd(_rxdBuffer);
+    if (rc == 0) {                  // read ok
+      if (_rxdBuffer.size() == 0) { // but no data
+        WARN(" 0 data ");
+      } else {
+        incoming = _rxdBuffer;
+      }
+    }
   }
   void init(){};
   void connect(){};
   void disconnect(){};
 };
-
+//==========================================================================
 int main(int argc, char **argv) {
 
   Config config = loadConfig(argc, argv);
   Thread workerThread("worker");
 
   Config serialConfig = config["serial"];
-  SerialMock serial(workerThread, serialConfig);
+  SerialSession serial(workerThread, serialConfig);
 
   Config zenohConfig = config["zenoh"];
   zenoh::Session zSession(workerThread, zenohConfig);
-  zenoh::Properties properties;
+
+  Config mockConfig = config["mock"];
+  SerialMock mock(workerThread, mockConfig);
+
+  BytesToCbor frameToCbor;
+  FrameExtractor bytesToFrame;
+  FrameGenerator toFrame;
 
   serial.init();
   serial.connect();
-  // zSession.scout();
-
+  zSession.scout();
+  // CBOR de-/serialization
   toFrame >> serial.outgoing;
-
-  serial.incoming >> getFrame >> serialCbor;
-
-  serialCbor >> CborFilter::nw(Z_OPEN) >> [&](const cbor &param) {
+  serial.incoming >> bytesToFrame >> frameToCbor;
+  // ZENOH feedbacks
+  zSession.incoming >> [&](const zenoh::Message &msg) {
+    toFrame.on(cbor::array{Z_PUBLISH, msg.key, msg.data});
+  };
+  // filter commands from uC
+  frameToCbor >> CborFilter::nw(Z_OPEN) >> [&](const cbor &param) {
     INFO("Z_OPEN");
-    int rc = zSession.open(properties);
+    int rc = zSession.open();
     toFrame.on(cbor::array{Z_OPEN, rc});
   };
 
-  serialCbor >> CborFilter::nw(Z_SUBSCRIBE) >> [&](const cbor &param) {
+  frameToCbor >> CborFilter::nw(Z_SUBSCRIBE) >> [&](const cbor &param) {
     INFO("Z_SUBSCRIBE");
     string resource = param.to_array()[1];
     zSession.subscribe(resource);
   };
 
-  serialCbor >> CborFilter::nw(Z_PUBLISH) >> [&](const cbor &param) {
+  frameToCbor >> CborFilter::nw(Z_PUBLISH) >> [&](const cbor &param) {
     INFO("Z_PUBLISH");
     string resource = param.to_array()[1];
     bytes data = param.to_array()[2];
     zSession.publish(resource, data);
   };
 
-  serialCbor >> CborFilter::nw(Z_CLOSE) >> [&](const cbor &param) {
+  frameToCbor >> CborFilter::nw(Z_CLOSE) >> [&](const cbor &param) {
     INFO("Z_CLOSE");
     zSession.close();
   };
 
-  serialCbor >> CborFilter::nw(Z_RESOURCE) >> [&](const cbor &param) {
+  frameToCbor >> CborFilter::nw(Z_RESOURCE) >> [&](const cbor &param) {
     INFO("Z_RESOURCE");
     string resource = param.to_array()[1];
     zenoh::ResourceKey key = zSession.resource(resource);
     toFrame.on(cbor::array{Z_RESOURCE, resource, key});
+  };
+
+  frameToCbor >> CborFilter::nw(Z_QUERY) >> [&](const cbor &param) {
+    INFO("Z_RESOURCE");
+    string uri = param.to_array()[1];
+    auto result = zSession.query(uri);
+    for (auto res : result) {
+      toFrame.on(cbor::array{Z_QUERY, res.key, res.data});
+    }
   };
 
   serial.connected >> [&](const bool isConnected) {
