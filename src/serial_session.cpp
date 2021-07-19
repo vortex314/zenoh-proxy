@@ -3,16 +3,17 @@
 
 SerialSession::SerialSession(Thread &thread, Config config)
     : Actor(thread), outgoing(10, [&](const bytes &data) {
-        INFO("TXD %s => %s", _serialPort.port().c_str(), hexDump(data).c_str());
+        //        INFO("TXD %s => %s", _serialPort.port().c_str(),
+        //        hexDump(data).c_str());
         _serialPort.txd(data);
       }) {
   _errorInvoker = new SerialSessionError(*this);
 }
 
 bool SerialSession::init() {
-  _port = "/dev/ttyUSB0";
+  _port = "/dev/ttyUSB1";
   _serialPort.port(_port.c_str());
-  _serialPort.baudrate(115200);
+  _serialPort.baudrate(921600);
   _serialPort.init();
   return true;
 }
@@ -31,10 +32,9 @@ bool SerialSession::disconnect() {
 }
 // on data incoming on filedescriptor
 void SerialSession::invoke() {
-  INFO(" reading data");
   int rc = _serialPort.rxd(_rxdBuffer);
-  if (rc == 0) {                  // read ok
-    if (_rxdBuffer.size() == 0) { // but no data
+  if (rc == 0) {                   // read ok
+    if (_rxdBuffer.size() == 0) {  // but no data
       WARN(" 0 data ");
     } else {
       incoming = _rxdBuffer;

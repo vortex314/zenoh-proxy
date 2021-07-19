@@ -1,4 +1,5 @@
 
+#include <cbor11.h>
 #include <zenoh_session.h>
 
 using namespace zenoh;
@@ -7,7 +8,8 @@ void Session::dataHandler(const zn_sample_t *sample, const void *arg) {
   Session *session = (Session *)arg;
   string key(sample->key.val, sample->key.len);
   bytes data(sample->value.val, sample->value.val + sample->value.len);
-  INFO(" ZENOH RXD : %s : %s ", key.c_str(), hexDump(data).c_str());
+//    INFO(" ZENOH RXD : %s : %s ", key.c_str(),
+//        cbor::debug(cbor::decode(data)).c_str());
   session->incoming.emit({key, data});
 }
 
@@ -29,9 +31,9 @@ int Session::scout() {
         pid = bytes(hello.pid.val, hello.pid.val + hello.pid.len);
       }
       INFO(" whatami: %s pid : %s ",
-           hello.whatami == ZN_ROUTER
-               ? "ZN_ROUTER"
-               : hello.whatami == ZN_PEER ? "ZN_PEER" : "OTHER",
+           hello.whatami == ZN_ROUTER ? "ZN_ROUTER"
+           : hello.whatami == ZN_PEER ? "ZN_PEER"
+                                      : "OTHER",
            hexDump(pid, "").c_str());
       for (unsigned int i = 0; i < locators.len; i++) {
         INFO(" locator : %s ", locators.val[i]);
@@ -49,15 +51,15 @@ int Session::open() {
   //   zn_properties_insert(config, ZN_CONFIG_LISTENER_KEY,
   //   z_string_make(US_WEST));
 
-  if (_zenoh_session == 0) // idempotent
+  if (_zenoh_session == 0)  // idempotent
     _zenoh_session = zn_open(config);
   INFO("zn_open() %s.", _zenoh_session == 0 ? "failed" : "succeeded");
   return _zenoh_session == 0 ? -1 : 0;
 }
 
 void Session::close() {
-  for (zn_subscriber_t *sub : _subscribers) {
-    zn_undeclare_subscriber(sub);
+  for (auto tuple : _subscribers) {
+    zn_undeclare_subscriber(tuple.second);
   }
   _subscribers.clear();
   //  if (_zenoh_session)
@@ -66,14 +68,16 @@ void Session::close() {
 }
 
 int Session::subscribe(string resource) {
-  zn_subscriber_t *sub =
-      zn_declare_subscriber(_zenoh_session, zn_rname(resource.c_str()),
-                            zn_subinfo_default(), dataHandler, this);
-  if (sub == NULL) {
-    WARN(" subscription failed for %s ", resource.c_str());
-    return -1;
+  if (_subscribers.find(resource) == _subscribers.end()) {
+    zn_subscriber_t *sub =
+        zn_declare_subscriber(_zenoh_session, zn_rname(resource.c_str()),
+                              zn_subinfo_default(), dataHandler, this);
+    if (sub == NULL) {
+      WARN(" subscription failed for %s ", resource.c_str());
+      return -1;
+    }
+    _subscribers.emplace(resource, sub);
   }
-  _subscribers.push_back(sub);
   return 0;
 }
 
@@ -83,12 +87,10 @@ int Session::publish(string topic, bytes &bs) {
 }
 
 ResourceKey Session::resource(string topic) {
-  struct zn_reskey_t reskey;
-  reskey.id = 0;
-  reskey.suffix = topic.c_str();
-  unsigned long rc = zn_declare_resource(_zenoh_session, reskey);
-  INFO(" %ld == %ld ", rc, reskey.id);
-  return 0;
+
+  zn_reskey_t rid = zn_rid(zn_declare_resource(_zenoh_session, zn_rname(topic.c_str())));
+  INFO(" resource id %ld ",  rid.id);
+  return rid.id;
 }
 
 vector<Message> Session::query(string uri) {

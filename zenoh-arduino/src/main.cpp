@@ -28,7 +28,7 @@ void serialEvent() {
 }
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(921600);
   Serial.println("\r\n===== Starting  build " __DATE__ " " __TIME__);
 
   Sys::hostname(S(HOSTNAME));

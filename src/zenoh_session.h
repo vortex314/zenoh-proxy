@@ -21,9 +21,9 @@ typedef unsigned long ResourceKey;
 
 class Session : public Actor {
   zn_session_t *_zenoh_session;
-  vector<zn_subscriber_t *> _subscribers;
+  unordered_map<string, zn_subscriber_t *> _subscribers;
 
-public:
+ public:
   ValueSource<bool> connected;
   ValueSource<Message> incoming;
 
@@ -40,5 +40,5 @@ public:
 };
 
 class Resource {};
-};     // namespace zenoh
-#endif // _ZENOH_SESSION_h_
+};      // namespace zenoh
+#endif  // _ZENOH_SESSION_h_

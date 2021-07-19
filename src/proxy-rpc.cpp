@@ -1,8 +1,8 @@
 #include <ArduinoJson.h>
 #include <Log.h>
+#include <config.h>
 #include <stdio.h>
 
-#include <config.h>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -25,11 +25,12 @@ const char *CMD_TO_STRING[] = {"Z_OPEN",    "Z_CLOSE", "Z_SUBSCRIBE",
 Config loadConfig(int argc, char **argv) { return Config(); };
 //=================================================================
 class BytesToCbor : public LambdaFlow<bytes, cbor> {
-public:
+ public:
   BytesToCbor()
       : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data) {
           msg = cbor::decode(data);
-          INFO(" msg %s", cbor::debug(msg).c_str());
+          cbor cb = cbor::decode(msg.to_array()[2]);
+          INFO(" msg %s => %s", cbor::debug(msg).c_str(),cbor::debug(cb).c_str());
           return msg.is_array();
         }){};
 };
@@ -37,7 +38,7 @@ public:
 class CborFilter : public LambdaFlow<cbor, cbor> {
   int _msgType;
 
-public:
+ public:
   CborFilter(int msgType)
       : LambdaFlow<cbor, cbor>([this](cbor &out, const cbor &in) {
           out = in;
@@ -54,7 +55,7 @@ class FrameExtractor : public Flow<bytes, bytes> {
   uint64_t _lastFrameFlag;
   uint32_t _frameTimeout = 1000;
 
-public:
+ public:
   FrameExtractor() : Flow<bytes, bytes>() {}
   void on(const bytes &bs) { handleRxd(bs); }
   void toStdout(const bytes &bs) {
@@ -67,8 +68,7 @@ public:
   }
 
   bool handleFrame(bytes &bs) {
-    if (bs.size() == 0)
-      return false;
+    if (bs.size() == 0) return false;
     if (ppp_deframe(_cleanData, bs)) {
       emit(_cleanData);
       return true;
@@ -99,7 +99,7 @@ public:
 };
 //=========================================================================
 class FrameGenerator : public LambdaFlow<cbor, bytes> {
-public:
+ public:
   FrameGenerator()
       : LambdaFlow<cbor, bytes>([&](bytes &out, const cbor &in) {
           out = ppp_frame(cbor::encode(in));
@@ -110,20 +110,20 @@ public:
 
 class SerialMock : public Actor, public Invoker {
   vector<cbor> testScenario = {
-      cbor::array{Z_OPEN}, //
+      cbor::array{Z_OPEN},  //
       cbor::array{Z_SUBSCRIBE, "/mock/alive"},
       cbor::array{Z_SUBSCRIBE, "/@/router/**"},
       cbor::array{Z_PUBLISH, "/mock/alive", cbor::encode(Sys::millis())},
       cbor::array{Z_RESOURCE, "/demo/aaa", 0},
       cbor::array{Z_RESOURCE, "demo/aaa", 0},
       cbor::array{Z_RESOURCE, "/demo/aaa", 0},
-      cbor::array{Z_CLOSE} //
+      cbor::array{Z_CLOSE}  //
   };
   int counter = 0;
   Serial _serial;
   bytes _rxdBuffer;
 
-public:
+ public:
   ValueFlow<bytes> outgoing;
   ValueSource<bytes> incoming;
   ValueSource<bool> connected;
@@ -132,16 +132,14 @@ public:
   FrameExtractor bytesToFrame;
   FrameGenerator toFrame;
   SerialMock(Thread &thr, Config &cfg)
-      : Actor(thr),
-        ticker(thr, 100, true, "ticker") {
+      : Actor(thr), ticker(thr, 100, true, "ticker") {
     _serial.port("/dev/ttyUSB1");
     _serial.baudrate(115200);
     _serial.init();
     _serial.connect();
     thread().addReadInvoker(_serial.fd(), this);
 
-    incoming >> bytesToFrame
- >> frameToCbor;
+    incoming >> bytesToFrame >> frameToCbor;
     frameToCbor >> [&](const cbor &cb) {
       INFO(" client received %s ", cbor::debug(cb).c_str());
     };
@@ -163,8 +161,8 @@ public:
   void invoke() {
     INFO(" reading data");
     int rc = _serial.rxd(_rxdBuffer);
-    if (rc == 0) {                  // read ok
-      if (_rxdBuffer.size() == 0) { // but no data
+    if (rc == 0) {                   // read ok
+      if (_rxdBuffer.size() == 0) {  // but no data
         WARN(" 0 data ");
       } else {
         incoming = _rxdBuffer;
@@ -177,7 +175,6 @@ public:
 };
 //==========================================================================
 int main(int argc, char **argv) {
-
   Config config = loadConfig(argc, argv);
   Thread workerThread("worker");
 
@@ -187,8 +184,8 @@ int main(int argc, char **argv) {
   Config zenohConfig = config["zenoh"];
   zenoh::Session zSession(workerThread, zenohConfig);
 
-  Config mockConfig = config["mock"];
-  SerialMock mock(workerThread, mockConfig);
+  //  Config mockConfig = config["mock"];
+  //  SerialMock mock(workerThread, mockConfig);
 
   BytesToCbor frameToCbor;
   FrameExtractor bytesToFrame;
@@ -196,7 +193,8 @@ int main(int argc, char **argv) {
 
   serial.init();
   serial.connect();
-  zSession.scout();
+  // zSession.scout();
+  zSession.open();
   // CBOR de-/serialization
   toFrame >> serial.outgoing;
   serial.incoming >> bytesToFrame >> frameToCbor;
@@ -214,14 +212,16 @@ int main(int argc, char **argv) {
   frameToCbor >> CborFilter::nw(Z_SUBSCRIBE) >> [&](const cbor &param) {
     INFO("Z_SUBSCRIBE");
     string resource = param.to_array()[1];
-    zSession.subscribe(resource);
+    int rc = zSession.subscribe(resource);
+    if (rc) WARN(" zenoh subscribe (%s,..) = %d ", resource.c_str(), rc);
   };
 
   frameToCbor >> CborFilter::nw(Z_PUBLISH) >> [&](const cbor &param) {
-    INFO("Z_PUBLISH");
+//    INFO("Z_PUBLISH");
     string resource = param.to_array()[1];
     bytes data = param.to_array()[2];
-    zSession.publish(resource, data);
+    int rc = zSession.publish(resource, data);
+    if (rc) WARN(" zenoh publish (%s,..) = %d ", resource.c_str(), rc);
   };
 
   frameToCbor >> CborFilter::nw(Z_CLOSE) >> [&](const cbor &param) {
@@ -246,8 +246,7 @@ int main(int argc, char **argv) {
   };
 
   serial.connected >> [&](const bool isConnected) {
-    if (!isConnected)
-      zSession.close();
+    if (!isConnected) zSession.close();
   };
 
   workerThread.run();
