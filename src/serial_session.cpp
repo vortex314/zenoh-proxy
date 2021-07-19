@@ -29,7 +29,7 @@ bool SerialSession::disconnect() {
   _serialPort.disconnect();
   return true;
 }
-
+// on data incoming on filedescriptor
 void SerialSession::invoke() {
   INFO(" reading data");
   int rc = _serialPort.rxd(_rxdBuffer);
@@ -41,7 +41,7 @@ void SerialSession::invoke() {
     }
   }
 }
-
+// on error issue onf ile descriptor
 void SerialSession::onError() { disconnect(); }
 
 int SerialSession::fd() { return _serialPort.fd(); }

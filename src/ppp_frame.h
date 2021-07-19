@@ -1,6 +1,6 @@
 #ifndef __FRAME_H_
 #define __FRAME_H_
-#include <memory.h>
+//#include <memory.h>
 #include <stdint.h>
 
 #include <thread>
