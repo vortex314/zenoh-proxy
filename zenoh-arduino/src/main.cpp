@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <ZenohSerial.h>
+#include <BrokerSerial.h>
 #include <limero.h>
 
 #include <deque>
@@ -12,7 +12,7 @@ Thread mainThread("main");
 LedBlinker ledBlinkerBlue(mainThread, PIN_LED, 100);
 Button button1(mainThread, PIN_BUTTON);
 Poller poller(mainThread);
-ZenohSerial zenoh(mainThread,Serial);
+BrokerSerial brkr(mainThread,Serial);
 Log logger(1024);
 
 LambdaSource<uint32_t> systemHeap([]() { return ESP.getFreeHeap(); });
@@ -24,7 +24,7 @@ ValueSource<const char *> systemBuild = __DATE__ " " __TIME__;
 
 void serialEvent() {
   INFO("-");
-  ZenohSerial::onRxd(&zenoh);
+  BrokerSerial::onRxd(&brkr);
 }
 
 void setup() {
@@ -35,7 +35,7 @@ void setup() {
 
   button1.init();
   ledBlinkerBlue.init();
-  zenoh.init();
+  brkr.init();
 /*
   zenoh.connected >> ledBlinkerBlue.blinkSlow;
   zenoh.connected >> poller.connected;
@@ -54,6 +54,6 @@ void setup() {
 void loop() {
   mainThread.loop();
   if (Serial.available()) {
-    ZenohSerial::onRxd(&zenoh);
+    BrokerSerial::onRxd(&brkr);
   }
 }

@@ -10,6 +10,8 @@
 using namespace std;
 
 Log logger(2048);
+#include <broker_protocol.h>
+#include <broker_zenoh.h>
 #include <cbor11.h>
 #include <ppp_frame.h>
 #include <serial_protocol.h>
@@ -18,8 +20,8 @@ Log logger(2048);
 
 //====================================================
 
-const char *CMD_TO_STRING[] = {"Z_OPEN",    "Z_CLOSE", "Z_SUBSCRIBE",
-                               "Z_PUBLISH", "Z_QUERY", "Z_QUERYABLE",
+const char *CMD_TO_STRING[] = {"B_CONNECT", "B_DISCONNECT", "Z_SUBSCRIBE",
+                               "Z_PUBLISH", "Z_QUERY",      "Z_QUERYABLE",
                                "Z_RESOURCE"};
 
 Config loadConfig(int argc, char **argv) { return Config(); };
@@ -30,7 +32,8 @@ class BytesToCbor : public LambdaFlow<bytes, cbor> {
       : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data) {
           msg = cbor::decode(data);
           cbor cb = cbor::decode(msg.to_array()[2]);
-          INFO(" msg %s => %s", cbor::debug(msg).c_str(),cbor::debug(cb).c_str());
+          INFO(" msg %s => %s", cbor::debug(msg).c_str(),
+               cbor::debug(cb).c_str());
           return msg.is_array();
         }){};
 };
@@ -110,14 +113,15 @@ class FrameGenerator : public LambdaFlow<cbor, bytes> {
 
 class SerialMock : public Actor, public Invoker {
   vector<cbor> testScenario = {
-      cbor::array{Z_OPEN},  //
-      cbor::array{Z_SUBSCRIBE, "/mock/alive"},
-      cbor::array{Z_SUBSCRIBE, "/@/router/**"},
-      cbor::array{Z_PUBLISH, "/mock/alive", cbor::encode(Sys::millis())},
-      cbor::array{Z_RESOURCE, "/demo/aaa", 0},
-      cbor::array{Z_RESOURCE, "demo/aaa", 0},
-      cbor::array{Z_RESOURCE, "/demo/aaa", 0},
-      cbor::array{Z_CLOSE}  //
+      cbor::array{B_CONNECT},  //
+      cbor::array{B_SUBSCRIBER, "/mock/alive", 0},
+      cbor::array{B_SUBSCRIBER, "/@/router/**", 1},
+      cbor::array{B_PUBLISHER, "src/esp32/system/uptime", 1},
+      cbor::array{B_PUBLISH, "/mock/alive", cbor::encode(Sys::millis())},
+      cbor::array{B_RESOURCE, "/demo/aaa", 0},
+      cbor::array{B_RESOURCE, "demo/aaa", 0},
+      cbor::array{B_RESOURCE, "/demo/aaa", 0},
+      cbor::array{B_DISCONNECT}  //
   };
   int counter = 0;
   Serial _serial;
@@ -181,8 +185,8 @@ int main(int argc, char **argv) {
   Config serialConfig = config["serial"];
   SerialSession serial(workerThread, serialConfig);
 
-  Config zenohConfig = config["zenoh"];
-  zenoh::Session zSession(workerThread, zenohConfig);
+  Config brokerConfig = config["zenoh"];
+  BrokerZenoh broker(workerThread, brokerConfig);
 
   //  Config mockConfig = config["mock"];
   //  SerialMock mock(workerThread, mockConfig);
@@ -194,7 +198,7 @@ int main(int argc, char **argv) {
   serial.init();
   serial.connect();
   // zSession.scout();
-  zSession.open();
+  broker.init();
   // CBOR de-/serialization
   toFrame >> serial.outgoing;
   serial.incoming >> bytesToFrame >> frameToCbor;
@@ -203,33 +207,34 @@ int main(int argc, char **argv) {
     toFrame.on(cbor::array{Z_PUBLISH, msg.key, msg.data});
   };
   // filter commands from uC
-  frameToCbor >> CborFilter::nw(Z_OPEN) >> [&](const cbor &param) {
-    INFO("Z_OPEN");
+  frameToCbor >> CborFilter::nw(B_CONNECT) >> [&](const cbor &param) {
+    INFO("B_CONNECT");
     int rc = zSession.open();
-    toFrame.on(cbor::array{Z_OPEN, rc});
+    toFrame.on(cbor::array{B_CONNECT, rc});
   };
 
-  frameToCbor >> CborFilter::nw(Z_SUBSCRIBE) >> [&](const cbor &param) {
-    INFO("Z_SUBSCRIBE");
+  frameToCbor >> CborFilter::nw(B_SUBSCRIBER) >> [&](const cbor &param) {
+    INFO("B_SUBSCRIBER");
     string resource = param.to_array()[1];
     int rc = zSession.subscribe(resource);
     if (rc) WARN(" zenoh subscribe (%s,..) = %d ", resource.c_str(), rc);
   };
 
-  frameToCbor >> CborFilter::nw(Z_PUBLISH) >> [&](const cbor &param) {
-//    INFO("Z_PUBLISH");
+  frameToCbor >> CborFilter::nw(B_PUBLISHER) >> [&](const cbor &param) {
+    INFO("B_PUBLISHER");
     string resource = param.to_array()[1];
     bytes data = param.to_array()[2];
     int rc = zSession.publish(resource, data);
-    if (rc) WARN(" zenoh publish (%s,..) = %d ", resource.c_str(), rc);
+    broker.publisher(resource) if (rc)
+        WARN(" zenoh publish (%s,..) = %d ", resource.c_str(), rc);
   };
 
-  frameToCbor >> CborFilter::nw(Z_CLOSE) >> [&](const cbor &param) {
-    INFO("Z_CLOSE");
+  frameToCbor >> CborFilter::nw(B_DISCONNECT) >> [&](const cbor &param) {
+    INFO("B_DISCONNECT");
     zSession.close();
   };
 
-  frameToCbor >> CborFilter::nw(Z_RESOURCE) >> [&](const cbor &param) {
+  frameToCbor >> CborFilter::nw(B_RESOURCE) >> [&](const cbor &param) {
     INFO("Z_RESOURCE");
     string resource = param.to_array()[1];
     zenoh::ResourceKey key = zSession.resource(resource);

@@ -1,10 +1,12 @@
-#ifndef ZENOHSERIAL_H
-#define ZENOHSERIAL_H
+#ifndef BrokerSerial_H
+#define BrokerSerial_H
 #include <ArduinoJson.h>
+#include <broker.h>
+#include <broker_protocol.h>
 #include <cbor11.h>
 #include <limero.h>
 #include <ppp_frame.h>
-#include <serial_protocol.h>
+
 #include <string>
 
 using namespace std;
@@ -118,7 +120,7 @@ public:
                                 }){};
 };
 
-class ZenohSerial : public Actor
+class BrokerSerial : public broker::Broker
 {
   Stream &_serial;
   ValueSource<bool> connected;
@@ -126,6 +128,8 @@ class ZenohSerial : public Actor
   ValueSource<bytes> serialRxd;
   ValueFlow<cbor> publishReceived;
   ValueFlow<cbor> resourceIdReceived;
+  broker::Publisher<uint64_t> *uptimePub;
+  broker::Publisher<uint64_t> *latencyPub;
 
   BytesToCbor _frameToCbor;
   FrameExtractor _bytesToFrame;
@@ -136,19 +140,6 @@ class ZenohSerial : public Actor
   uint64_t _loopbackReceived;
 
 private:
-  template <typename T>
-  void publish(string topic, T t)
-  {
-    cbor msg = cbor::array{Z_PUBLISH, topic, cbor::encode(t)};
-    _toFrame.on(msg);
-    resourceId(topic);
-  }
-  template <typename T>
-  void publish(uint32_t rid, T t)
-  {
-    cbor msg = cbor::array{Z_PUBLISH, rid, cbor::encode(t)};
-    _toFrame.on(msg);
-  }
   void subscribe(string topic);
   void resourceId(string topic);
 
@@ -156,26 +147,9 @@ public:
   static void onRxd(void *);
   TimerSource keepAliveTimer;
   TimerSource connectTimer;
-  ZenohSerial(Thread &thr, Stream &serial);
-  ~ZenohSerial();
+  BrokerSerial(Thread &thr, Stream &serial);
+  ~BrokerSerial();
   void init();
 };
 
-template <typename T>
-class ToTopic : public Sink<T>
-{
-public:
-  string name;
-  uint32_t id = 0;
-  ZenohSerial &_zenohSerial;
-  ToTopic(ZenohSerial &zenohSerial) : Sink<T>(3), _zenohSerial(zenohSerial){};
-  void on(const T &t)
-  {
-    if (id)
-      _zenohSerial.publish(id, t);
-    else
-      _zenohSerial.publish(name, t);
-  }
-};
-
-#endif // ZenohSERIAL_H
+#endif // BrokerSerial_H
