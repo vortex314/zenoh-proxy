@@ -53,7 +53,7 @@ target_sources(proxy PRIVATE src/proxy.cpp
   src/config.cpp 
   src/util.cpp
   src/serial_session.cpp
-  src/zenoh_session.cpp
+  src/broker_zenoh.cpp
   ../cbor11/cbor11.cpp ) 
 
 target_link_libraries(proxy 

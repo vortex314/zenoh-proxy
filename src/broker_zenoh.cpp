@@ -11,11 +11,12 @@ void BrokerZenoh::dataHandler(const zn_sample_t *sample, const void *arg) {
   broker->incomingPub.emit({1, data});
 }
 
-BrokerZenoh::BrokerZenoh(Thread &thr, Config &cfg) : Actor(thr) {
+BrokerZenoh::BrokerZenoh(Thread &thr, Config &cfg)
+    : Actor(thr), incomingPub(10) {
   _zenoh_session = 0;
 }
 
-int Session::scout() {
+int BrokerZenoh::scout() {
   zn_properties_t *config = zn_config_default();
   z_string_t us_west = z_string_make(US_WEST);
   //  zn_properties_insert(config, ZN_CONFIG_PEER_KEY, us_west);
@@ -46,6 +47,8 @@ int Session::scout() {
   return 0;
 }
 
+int BrokerZenoh::init() { return 0; }
+
 int BrokerZenoh::connect() {
   zn_properties_t *config = zn_config_default();
   //   zn_properties_insert(config, ZN_CONFIG_LISTENER_KEY,
@@ -57,26 +60,33 @@ int BrokerZenoh::connect() {
   return _zenoh_session == 0 ? -1 : 0;
 }
 
-void BrokerZenoh::disconnect() {
+int BrokerZenoh::disconnect() {
   for (auto tuple : _subscribers) {
     zn_undeclare_subscriber(tuple.second);
   }
   _subscribers.clear();
+  for (auto tuple : _publishers) {
+    zn_undeclare_publisher(tuple.second);
+  }
+  _publishers.clear();
+
+  return 0;
   //  if (_zenoh_session)
   //   zn_close(_zenoh_session);
   // _zenoh_session = NULL;
 }
 
-int BrokerZenoh::subscriber(string resource) {
-  if (_subscribers.find(resource) == _subscribers.end()) {
+int BrokerZenoh::subscriber(int id, string pattern) {
+  INFO(" Zenoh subscriber %d : %s ", id, pattern.c_str());
+  if (_subscribers.find(id) == _subscribers.end()) {
     zn_subscriber_t *sub =
-        zn_declare_subscriber(_zenoh_session, zn_rname(resource.c_str()),
+        zn_declare_subscriber(_zenoh_session, zn_rname(pattern.c_str()),
                               zn_subinfo_default(), dataHandler, this);
     if (sub == NULL) {
-      WARN(" subscription failed for %s ", resource.c_str());
+      WARN(" subscription failed for %s ", pattern.c_str());
       return -1;
     }
-    _subscribers.emplace(resource, sub);
+    _subscribers.emplace(id, sub);
   }
   return 0;
 }
@@ -84,16 +94,26 @@ int BrokerZenoh::subscriber(string resource) {
 int BrokerZenoh::publisher(int id, string key) {
   if (_publishers.find(id) == _publishers.end()) {
     zn_reskey_t reskey = resource(key);
-    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
-    if (pub == 0) WARN(" unable to declar publisher %s", key.c_str());
+    zn_publisher_t *pub = zn_declare_publisher(_zenoh_session, reskey);
+    if (pub == 0) WARN(" unable to declare publisher %s", key.c_str());
     _publishers.emplace(id, pub);
+    _pub_reskeys.emplace(id, reskey);
   }
   return 0;
 }
 
-int BrokerZenoh::publish(int topic, bytes &bs) {
-  return zn_write(_zenoh_session, zn_rname(topic.c_str()), bs.data(),
-                  bs.size());
+int BrokerZenoh::publish(int id, bytes &bs) {
+  auto it = _publishers.find(id);
+  if (it != _publishers.end()) {
+    zn_publisher_t *pp = it->second;
+    return zn_write(_zenoh_session, _pub_reskeys.find(id)->second, bs.data(),
+                    bs.size());
+  }
+
+  else {
+    INFO(" publish id %d unknown. ", id);
+    return ENOENT;
+  }
 }
 
 zn_reskey_t BrokerZenoh::resource(string topic) {
@@ -101,9 +121,9 @@ zn_reskey_t BrokerZenoh::resource(string topic) {
       zn_rid(zn_declare_resource(_zenoh_session, zn_rname(topic.c_str())));
   return rid;
 }
-
-vector<Message> Session::query(string uri) {
-  vector<Message> result;
+/*
+vector<PubMsg> BrokerZenoh::query(string uri) {
+  vector<PubMsg> result;
   zn_reply_data_array_t replies = zn_query_collect(
       _zenoh_session, zn_rname(uri.c_str()), "", zn_query_target_default(),
       zn_query_consolidation_default());
@@ -119,3 +139,4 @@ vector<Message> Session::query(string uri) {
   zn_reply_data_array_free(replies);
   return result;
 }
+*/

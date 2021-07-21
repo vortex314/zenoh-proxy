@@ -38,9 +38,8 @@ namespace broker
     public:
         Publisher(int id, string key) : LambdaFlow<T, cbor>([&](cbor &cb, const T &t)
                                                             {
-                                                                INFO(" ");
                                                                 cb = cbor::array{B_PUBLISH, Resource::id(), t};
-                                                                INFO("%s : %s ",Resource::key().c_str(),cbor::debug(cb).c_str());
+                                                                INFO("%s : %s ", Resource::key().c_str(), cbor::debug(cb).c_str());
                                                                 return true;
                                                             }),
                                         Resource(id, key){};
@@ -49,8 +48,8 @@ namespace broker
     class Broker : public Actor
     {
     public:
-        QueueFlow<cbor> incomingCbor;
-        QueueFlow<cbor> outgoingCbor;
+        ValueFlow<cbor> incomingCbor;
+        ValueFlow<cbor> outgoingCbor;
         int _resourceId = 0;
 
         vector<Resource *> _publishers;
@@ -59,7 +58,7 @@ namespace broker
         string brokerDstPrefix = "dst/esp32/";
 
     public:
-        Broker(Thread thr) : Actor(thr), incomingCbor(10), outgoingCbor(10){};
+        Broker(Thread thr) : Actor(thr){};
         template <typename T>
         Subscriber<T> &subscriber(string);
         template <typename T>

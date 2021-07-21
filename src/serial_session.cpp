@@ -3,17 +3,16 @@
 
 SerialSession::SerialSession(Thread &thread, Config config)
     : Actor(thread), outgoing(10, [&](const bytes &data) {
-        //        INFO("TXD %s => %s", _serialPort.port().c_str(),
-        //        hexDump(data).c_str());
+        INFO("TXD %s => %s", _serialPort.port().c_str(), hexDump(data).c_str());
         _serialPort.txd(data);
       }) {
   _errorInvoker = new SerialSessionError(*this);
 }
 
 bool SerialSession::init() {
-  _port = "/dev/ttyUSB1";
+  _port = "/dev/ttyUSB0";
   _serialPort.port(_port.c_str());
-  _serialPort.baudrate(921600);
+  _serialPort.baudrate(115200);
   _serialPort.init();
   return true;
 }

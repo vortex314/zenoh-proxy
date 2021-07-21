@@ -64,6 +64,7 @@ class Serial {
 
   int modeRun();
   int modeProgram();
+  int modeInfo();
 
   // properties
   int baudrate(uint32_t);

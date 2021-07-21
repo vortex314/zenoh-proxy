@@ -20,9 +20,9 @@ Log logger(2048);
 
 //====================================================
 
-const char *CMD_TO_STRING[] = {"B_CONNECT", "B_DISCONNECT", "Z_SUBSCRIBE",
-                               "Z_PUBLISH", "Z_QUERY",      "Z_QUERYABLE",
-                               "Z_RESOURCE"};
+const char *CMD_TO_STRING[] = {"B_CONNECT",   "B_DISCONNECT", "B_SUBSCRIBER",
+                               "B_PUBLISHER", "B_PUBLISH",    "B_RESOURCE",
+                               "B_QUERY"};
 
 Config loadConfig(int argc, char **argv) { return Config(); };
 //=================================================================
@@ -31,9 +31,9 @@ class BytesToCbor : public LambdaFlow<bytes, cbor> {
   BytesToCbor()
       : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data) {
           msg = cbor::decode(data);
-          cbor cb = cbor::decode(msg.to_array()[2]);
-          INFO(" msg %s => %s", cbor::debug(msg).c_str(),
-               cbor::debug(cb).c_str());
+          int msgType = msg.to_array()[0];
+          INFO(" PROXY RXD %s :  %s", CMD_TO_STRING[msgType],
+               cbor::debug(msg).c_str());
           return msg.is_array();
         }){};
 };
@@ -94,7 +94,7 @@ class FrameExtractor : public Flow<bytes, bytes> {
     if ((Sys::millis() - _lastFrameFlag) > _frameTimeout) {
       //   cout << " skip  bytes " << hexDump(bs) << endl;
       //   cout << " frame data drop " << hexDump(frameData) << flush;
-      toStdout(bs);
+      toStdout(_inputFrame);
       _inputFrame.clear();
     }
   }
@@ -105,6 +105,9 @@ class FrameGenerator : public LambdaFlow<cbor, bytes> {
  public:
   FrameGenerator()
       : LambdaFlow<cbor, bytes>([&](bytes &out, const cbor &in) {
+          int msgType = in.to_array()[0];
+          INFO(" PROXY TXD %s :  %s", CMD_TO_STRING[msgType],
+               cbor::debug(in).c_str());
           out = ppp_frame(cbor::encode(in));
           return true;
         }){};
@@ -141,31 +144,26 @@ int main(int argc, char **argv) {
   };
   // filter commands from uC
   frameToCbor >> CborFilter::nw(B_CONNECT) >> [&](const cbor &param) {
-    INFO("B_CONNECT");
     int rc = broker.connect();
     toFrame.on(cbor::array{B_CONNECT, rc});
   };
 
   frameToCbor >> CborFilter::nw(B_SUBSCRIBER) >> [&](const cbor &param) {
-    INFO("B_SUBSCRIBER");
-    int id = param.to_array()[1];
-    string key = param.to_array()[2];
+    int id = param.to_array()[2];
+    string key = param.to_array()[1];
     int rc = broker.subscriber(id, key);
     if (rc) WARN(" subscriber (%s,..) = %d ", key.c_str(), rc);
   };
 
   frameToCbor >> CborFilter::nw(B_PUBLISHER) >> [&](const cbor &param) {
-    INFO("B_PUBLISHER");
-    int id = param.to_array()[1];
-    string key = param.to_array()[2];
+    int id = param.to_array()[2];
+    string key = param.to_array()[1];
     int rc = broker.publisher(id, key);
     if (rc) WARN("  publish (%s,..) = %d ", key.c_str(), rc);
   };
 
-  frameToCbor >> CborFilter::nw(B_DISCONNECT) >> [&](const cbor &param) {
-    INFO("B_DISCONNECT");
-    broker.disconnect();
-  };
+  frameToCbor >> CborFilter::nw(B_DISCONNECT) >>
+      [&](const cbor &param) { broker.disconnect(); };
   /*
     frameToCbor >> CborFilter::nw(B_RESOURCE) >> [&](const cbor &param) {
       INFO("Z_RESOURCE");
@@ -173,15 +171,15 @@ int main(int argc, char **argv) {
       zenoh::ResourceKey key = zSession.resource(resource);
       toFrame.on(cbor::array{Z_RESOURCE, resource, key});
     };*/
-/*
-  frameToCbor >> CborFilter::nw(Z_QUERY) >> [&](const cbor &param) {
-    INFO("Z_RESOURCE");
-    string uri = param.to_array()[1];
-    auto result = zSession.query(uri);
-    for (auto res : result) {
-      toFrame.on(cbor::array{Z_QUERY, res.key, res.data});
-    }
-  };*/
+  /*
+    frameToCbor >> CborFilter::nw(Z_QUERY) >> [&](const cbor &param) {
+      INFO("Z_RESOURCE");
+      string uri = param.to_array()[1];
+      auto result = zSession.query(uri);
+      for (auto res : result) {
+        toFrame.on(cbor::array{Z_QUERY, res.key, res.data});
+      }
+    };*/
 
   serial.connected >> [&](const bool isConnected) {
     if (!isConnected) broker.disconnect();

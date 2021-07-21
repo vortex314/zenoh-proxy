@@ -20,14 +20,14 @@ typedef vector<uint8_t> bytes;
 #define TIMER_SERIAL 3
 
 //=================================================================
-class BytesToCbor : public LambdaFlow<bytes, cbor>
+class FrameToCbor : public LambdaFlow<bytes, cbor>
 {
 public:
-  BytesToCbor()
+  FrameToCbor()
       : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data)
                                 {
                                   msg = cbor::decode(data);
-                                  //          INFO(" msg %s", cbor::debug(msg).c_str());
+                                  INFO(" msg %s", cbor::debug(msg).c_str());
                                   return msg.is_array();
                                 }){};
 };
@@ -49,7 +49,7 @@ public:
   static CborFilter &nw(int msgType) { return *new CborFilter(msgType); }
 };
 //================================================================
-class FrameExtractor : public Flow<bytes, bytes>
+class BytesToFrame : public Flow<bytes, bytes>
 {
   bytes _inputFrame;
   bytes _cleanData;
@@ -57,22 +57,24 @@ class FrameExtractor : public Flow<bytes, bytes>
   uint32_t _frameTimeout = 1000;
 
 public:
-  FrameExtractor() : Flow<bytes, bytes>() {}
+  BytesToFrame() : Flow<bytes, bytes>() {}
   void on(const bytes &bs) { handleRxd(bs); }
   void toStdout(const bytes &bs)
   {
     if (bs.size())
     {
-      // Serial.println(bs.data(),bs.size());
+      Serial.println("ignoring bytes : " + bs.size());
     }
   }
 
   bool handleFrame(bytes &bs)
   {
+    INFO(" ");
     if (bs.size() == 0)
       return false;
     if (ppp_deframe(_cleanData, bs))
     {
+      INFO("cleanData : %d ", _cleanData.size());
       emit(_cleanData);
       return true;
     }
@@ -85,6 +87,7 @@ public:
 
   void handleRxd(const bytes &bs)
   {
+    INFO(" ");
     for (uint8_t b : bs)
     {
       if (b == PPP_FLAG_CHAR)
@@ -109,13 +112,13 @@ public:
   void request(){};
 };
 //=========================================================================
-class FrameGenerator : public LambdaFlow<cbor, bytes>
+class CborToFrame : public LambdaFlow<cbor, bytes>
 {
 public:
-  FrameGenerator()
+  CborToFrame()
       : LambdaFlow<cbor, bytes>([&](bytes &out, const cbor &in)
                                 {
-                                  INFO(" ");
+                                  INFO("uC TXD %s", cbor::debug(in).c_str());
                                   out = ppp_frame(cbor::encode(in));
                                   return true;
                                 }){};
@@ -124,15 +127,14 @@ public:
 class BrokerSerial : public broker::Broker
 {
   Stream &_serial;
-  ValueSource<bytes> incoming;
   ValueSource<bytes> serialRxd;
   broker::Publisher<uint64_t> *uptimePub;
   broker::Publisher<uint64_t> *latencyPub;
   broker::Subscriber<uint64_t> *uptimeSub;
 
-  BytesToCbor _frameToCbor;
-  FrameExtractor _bytesToFrame;
-  FrameGenerator _toFrame;
+  FrameToCbor _frameToCbor;
+  BytesToFrame _bytesToFrame;
+  CborToFrame _toFrame;
 
   string _loopbackTopic = "dst/esp32/system/loopback";
   string _dstPrefix = "dst/esp32/";
