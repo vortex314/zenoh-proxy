@@ -6,6 +6,7 @@
                 "/usr/local/include",
                 "${workspaceFolder}/../Common/",
                 "${workspaceFolder}/../limero/inc/",
+                "${workspaceFolder}/../zenoh-c/include/",
                 "${workspaceFolder}/src/",
                 "${workspaceFolder}/../ArduinoJson/src",
                 "${workspaceFolder}/../cbor11",

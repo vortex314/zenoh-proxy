@@ -8,52 +8,71 @@ BrokerSerial::BrokerSerial(Thread &thr, Stream &serial)
       keepAliveTimer(thr, 3000, true),
       connectTimer(thr, 2000, true)
 {
-  uptimePub = &publisher<uint64_t>("system/uptime");
-  latencyPub = &publisher<uint64_t>("system/latency");
-
-  outgoingCbor >> _toFrame;
-  _toFrame >> [&](const bytes &bs)
-  { _serial.write(bs.data(), bs.size()); };
-
-  serialRxd >> _bytesToFrame >> _frameToCbor;
-  // BROKER feedbacks
-  _frameToCbor >> CborFilter::nw(B_PUBLISH) >> publishReceived;
-  _frameToCbor >> CborFilter::nw(B_RESOURCE) >> resourceIdReceived;
-  publishReceived >> [&](const cbor &cb)
-  {
-    string resource = cb.to_array()[1];
-    if (resource == _loopbackTopic)
-    {
-      bytes data = cb.to_array()[2];
-      uint64_t ts = cbor::decode(data);
-      latencyPub->on(Sys::millis() - ts);
-    }
-  };
 }
 BrokerSerial::~BrokerSerial() {}
 
 void BrokerSerial::init()
 {
-  // Sink<TimerMsg, 3> &me = *this;
+  // outgoing
+  connected = false;
+  uptimePub = &publisher<uint64_t>("system/uptime");
+  latencyPub = &publisher<uint64_t>("system/latency");
+  INFO(" %X %X ", uptimePub, latencyPub);
+  uptimeSub = &subscriber<uint64_t>(brokerDstPrefix + "system/uptime");
+  outgoingCbor >> _toFrame;
+//  incomingCbor.async(thread());
+//  outgoingCbor.async(thread());
+
+  _toFrame >> [&](const bytes &bs)
+  {
+    INFO(" ");
+    _serial.write(bs.data(), bs.size());
+  };
+
+  serialRxd >> _bytesToFrame >> _frameToCbor;
+  INFO(" ");
   keepAliveTimer >> [&](const TimerMsg &tm)
   {
-    //   if (connected())
-    uptimePub->on(Sys::millis());
-  };
-  connectTimer >> [&](const TimerMsg &tm)
-  {
-    if (Sys::millis() > (_loopbackReceived + 3000))
-    {
-      connected = false;
-      subscribe(_dstPrefix + "**");
-      resourceId(_dstPrefix);
-    }
+    INFO(" %d ", connected());
+    if (connected())
+      uptimePub->on(Sys::millis());
     else
+      _toFrame.on(cbor::array{B_CONNECT, brokerSrcPrefix});
+  };
+  INFO(" ");
+
+  incomingCbor >> [&](const cbor &in)
+  {
+    int msgType = in.to_array()[0];
+    if (msgType == B_CONNECT)
     {
       connected = true;
+      for (auto sub : _subscribers)
+      {
+        _toFrame.on(cbor::array{B_SUBSCRIBER, sub->key(), sub->id()});
+      }
+      for (auto pub : _publishers)
+      {
+        _toFrame.on(cbor::array{B_PUBLISHER, pub->key(), pub->id()});
+      }
     }
-    uptimePub->on(Sys::millis());
   };
+  INFO(" ");
+
+  *uptimeSub >> [&](const uint64_t &t)
+  {
+    latencyPub->on(t - Sys::millis());
+    _loopbackReceived = Sys::millis();
+  };
+  INFO(" ");
+
+  connectTimer >> [&](const TimerMsg &tm)
+  {
+    uint64_t timeSinceLoopback = Sys::millis() - _loopbackReceived;
+    connected = timeSinceLoopback < 3000;
+  };
+  INFO(" ");
+
   _serial.setTimeout(0);
 }
 
@@ -66,14 +85,4 @@ void BrokerSerial::onRxd(void *me)
     data.push_back(brk->_serial.read());
   }
   brk->serialRxd.emit(data);
-}
-
-void BrokerSerial::subscribe(string topic)
-{
-  _toFrame.on(cbor::array{B_SUBSCRIBER, topic});
-}
-
-void BrokerSerial::resourceId(string topic)
-{
-  _toFrame.on(cbor::array{B_RESOURCE, topic});
 }

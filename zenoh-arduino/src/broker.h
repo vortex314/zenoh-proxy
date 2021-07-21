@@ -8,11 +8,19 @@ using namespace std;
 
 namespace broker
 {
-    template <typename T>
-    class Subscriber : public LambdaFlow<cbor, T>
+    class Resource
     {
         int _id;
         string _key;
+
+    public:
+        Resource(int i, string k) : _id(i), _key(k){};
+        int id() { return _id; }
+        const string &key() { return _key; }
+    };
+    template <typename T>
+    class Subscriber : public LambdaFlow<cbor, T>, public Resource
+    {
 
     public:
         Subscriber(int id, string key) : LambdaFlow<cbor, T>([](T &t, const cbor &data)
@@ -20,24 +28,22 @@ namespace broker
                                                                  t = data.to_array()[2];
                                                                  return true;
                                                              }),
-                                         _id(id), _key(key){};
+                                         Resource(id, key){};
     };
 
     template <typename T>
-    class Publisher : public LambdaFlow<T, cbor>
+    class Publisher : public LambdaFlow<T, cbor>, public Resource
     {
-
-        int _id;
-        string _key;
 
     public:
         Publisher(int id, string key) : LambdaFlow<T, cbor>([&](cbor &cb, const T &t)
                                                             {
-                                                                cb = cbor::array{B_PUBLISH, _id, t};
+                                                                INFO(" ");
+                                                                cb = cbor::array{B_PUBLISH, Resource::id(), t};
+                                                                INFO("%s : %s ",Resource::key().c_str(),cbor::debug(cb).c_str());
                                                                 return true;
                                                             }),
-                                        _id(id), _key(key){};
-        int id() { return _id; }
+                                        Resource(id, key){};
     };
 
     class Broker : public Actor
@@ -45,12 +51,15 @@ namespace broker
     public:
         QueueFlow<cbor> incomingCbor;
         QueueFlow<cbor> outgoingCbor;
+        int _resourceId = 0;
 
-        vector<Sink<cbor> *> _publishers;
-        vector<Source<cbor> *> _subscribers;
+        vector<Resource *> _publishers;
+        vector<Resource *> _subscribers;
+        string brokerSrcPrefix = "src/esp32/";
+        string brokerDstPrefix = "dst/esp32/";
 
     public:
-        Broker(Thread thr):Actor(thr),incomingCbor(10),outgoingCbor(10){};
+        Broker(Thread thr) : Actor(thr), incomingCbor(10), outgoingCbor(10){};
         template <typename T>
         Subscriber<T> &subscriber(string);
         template <typename T>
@@ -60,31 +69,35 @@ namespace broker
     template <typename T>
     Publisher<T> &Broker::publisher(string name)
     {
-        Publisher<T> *p = new Publisher<T>(_publishers.size(), name);
-        //        _publishers.push_back(p);
+        string topic = name;
+        if (!(topic.find("src/") == 0 || topic.find("dst/") == 0))
+        {
+            topic = brokerSrcPrefix + name;
+        }
+        Publisher<T> *p = new Publisher<T>(_resourceId++, topic);
+        _publishers.push_back(p);
         *p >> outgoingCbor;
+        INFO(" created publisher %s : %X ", name.c_str(), p);
         return *p;
     }
 
     template <typename T>
     Subscriber<T> &Broker::subscriber(string name)
     {
-        Subscriber<T> *s = new Subscriber<T>(_subscribers.size(), name);
-        /*        _subscribers.push_back(s);
-        incoming >> [&](cbor &out, const cbor &in)
+        string topic = name;
+        if (!(topic.find("src/") == 0 || topic.find("dst/") == 0))
         {
-            out = in;
-            return in.to_array()[1] == s->id();
-        } >> s;*/
+            topic = brokerDstPrefix + name;
+        }
+        Subscriber<T> *s = new Subscriber<T>(_resourceId++, topic);
+        _subscribers.push_back(s);
+        incomingCbor >> [&](const cbor &in)
+        {
+            int msgType = in.to_array()[1];
+            if (msgType == s->id())
+                s->on(in);
+        };
         incomingCbor >> s;
         return *s;
     }
 };
-/*
-void ffffffffffffffff()
-{
-    Thread worker("worker");
-    broker::Broker broker(worker);
-    broker.subscriber<uint64_t>("src/global/system/utc") >> broker.publisher<uint64_t>("system/time");
-}
-*/

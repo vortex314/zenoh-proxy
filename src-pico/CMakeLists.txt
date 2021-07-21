@@ -30,7 +30,7 @@ set(PICO_SRCS ${PICO}/src/codec.c
 
 include_directories(
   src 
-  ${ZENOHC}/include
+  ${PICO}/include
 ../limero/inc 
 ../limero/linux  
 ../cbor11
@@ -44,10 +44,33 @@ set (CMAKE_CXX_STANDARD 11)
 
  
 # set up our program
+add_executable(serial_client)
 add_executable(proxy)
+add_executable(proxy-rpc)
+add_executable(zn_pubsub)
+add_executable(myBroker)
 
+
+# declare our source files
+target_sources(serial_client PRIVATE src_client/serial_client.cpp  
+  src/serial.cpp  
+  src/ppp_frame.cpp
+  ${PICO_SRCS} 
+  src/config.cpp 
+  src_client/unix_serial.cpp 
+  src/util.cpp )
 
 target_sources(proxy PRIVATE src/proxy.cpp 
+  src/ppp_frame.cpp 
+  ${PICO_SRCS} 
+  src/serial.cpp 
+  src/config.cpp 
+  src/util.cpp
+  src/tcp.cpp
+  src/tcp_session.cpp
+  src/serial_session.cpp) 
+
+target_sources(proxy-rpc PRIVATE src/proxy-rpc.cpp 
   src/ppp_frame.cpp 
   src/serial.cpp 
   src/config.cpp 
@@ -56,7 +79,39 @@ target_sources(proxy PRIVATE src/proxy.cpp
   src/zenoh_session.cpp
   ../cbor11/cbor11.cpp ) 
 
+  target_sources(myBroker PRIVATE src/broker.cpp 
+  src/util.cpp)
+
+  target_sources(zn_pubsub PRIVATE src/zn_pubsub.c )
+
+target_link_libraries(serial_client 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-lpthread  
+-lrt  
+-latomic)
+
 target_link_libraries(proxy 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-lpthread  
+-lrt  
+-latomic)
+
+
+target_link_libraries(proxy-rpc 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-L/usr/local/lib/ -lzenohc
+-lpthread  
+-lrt  
+-latomic)
+
+
+target_link_libraries(zn_pubsub 
+-L/usr/local/lib/ -lzenohc
+-lpthread  
+-lrt  
+-latomic)
+
+target_link_libraries(myBroker 
 -L/home/lieven/workspace/limero/linux/build -llimero 
 -L/usr/local/lib/ -lzenohc
 -lpthread  

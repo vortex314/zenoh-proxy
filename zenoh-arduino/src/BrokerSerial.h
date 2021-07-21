@@ -115,6 +115,7 @@ public:
   FrameGenerator()
       : LambdaFlow<cbor, bytes>([&](bytes &out, const cbor &in)
                                 {
+                                  INFO(" ");
                                   out = ppp_frame(cbor::encode(in));
                                   return true;
                                 }){};
@@ -123,13 +124,11 @@ public:
 class BrokerSerial : public broker::Broker
 {
   Stream &_serial;
-  ValueSource<bool> connected;
   ValueSource<bytes> incoming;
   ValueSource<bytes> serialRxd;
-  ValueFlow<cbor> publishReceived;
-  ValueFlow<cbor> resourceIdReceived;
   broker::Publisher<uint64_t> *uptimePub;
   broker::Publisher<uint64_t> *latencyPub;
+  broker::Subscriber<uint64_t> *uptimeSub;
 
   BytesToCbor _frameToCbor;
   FrameExtractor _bytesToFrame;
@@ -139,11 +138,8 @@ class BrokerSerial : public broker::Broker
   string _dstPrefix = "dst/esp32/";
   uint64_t _loopbackReceived;
 
-private:
-  void subscribe(string topic);
-  void resourceId(string topic);
-
 public:
+  ValueSource<bool> connected;
   static void onRxd(void *);
   TimerSource keepAliveTimer;
   TimerSource connectTimer;

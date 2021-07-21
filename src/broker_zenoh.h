@@ -1,6 +1,5 @@
 #ifndef _ZENOH_SESSION_H_
 #define _ZENOH_SESSION_H_
-#include "broker.h"
 #include "limero.h"
 #include "util.h"
 extern "C" {
@@ -11,38 +10,32 @@ extern "C" {
 
 using namespace std;
 
-typedef struct Message {
-  string key;
-  bytes data;
-} Message;
+typedef int (*SubscribeCallback)(int, bytes);
+struct PubMsg {
+  int id;
+  bytes value;
+};
 
-typedef unordered_map<unsigned long, string> Properties;
-typedef unsigned long ResourceKey;
-
-class PublisherZenoh : public Publisher {};
-
-class SubscriberZenoh : public Subscriber {};
-
-class BrokerZenoh : public Broker {
+class BrokerZenoh : public Actor {
   zn_session_t *_zenoh_session;
   unordered_map<string, zn_subscriber_t *> _subscribers;
+  unordered_map<int, zn_publisher_t *> _publishers;
   static void dataHandler(const zn_sample_t *, const void *);
-  ResourceKey resource(string topic);
-  vector<Message> query(string);
   int scout();
-  Properties &info();
 
  public:
   ValueSource<bool> connected;
-  ValueSource<Message> incoming;
+  QueueFlow<PubMsg> incomingPub;
 
   BrokerZenoh(Thread &, Config &);
   int init();
   int connect();
   int disconnect();
-  Subscriber *subscriber(string);
-  Publisher *publisher(string topic);
-  int unSubscribe(Subscriber *);
+  int publisher(int, string);
+  int subscriber(int, string);
+  int publish(int, bytes);
+  int onSubscribe(SubscribeCallback);
+  int unSubscriber(int);
 };
 // namespace zenoh
 #endif  // _ZENOH_SESSION_h_

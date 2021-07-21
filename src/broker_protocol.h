@@ -4,9 +4,9 @@ enum
 {
   B_CONNECT, // broker connect
   B_DISCONNECT,
-  B_PUBLISH,    // id , bytes value
-  B_SUBSCRIBER, // string ,id, qos,
-  B_PUBLISHER,  // string ,id,  qos
-  B_RESOURCE,   // string ,id
+  B_PUBLISH,    // RXD,TXD id , bytes value
+  B_SUBSCRIBER, // TXD string ,id, qos,
+  B_PUBLISHER,  // TXD string ,id,  qos
+  B_RESOURCE,   // RXD id
 };
 #endif

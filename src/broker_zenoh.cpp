@@ -1,19 +1,19 @@
 
+#include <broker_zenoh.h>
 #include <cbor11.h>
-#include <zenoh_session.h>
 
-using namespace zenoh;
-
-void Session::dataHandler(const zn_sample_t *sample, const void *arg) {
-  Session *session = (Session *)arg;
+void BrokerZenoh::dataHandler(const zn_sample_t *sample, const void *arg) {
+  BrokerZenoh *broker = (BrokerZenoh *)arg;
   string key(sample->key.val, sample->key.len);
   bytes data(sample->value.val, sample->value.val + sample->value.len);
-//    INFO(" ZENOH RXD : %s : %s ", key.c_str(),
-//        cbor::debug(cbor::decode(data)).c_str());
-  session->incoming.emit({key, data});
+  //    INFO(" ZENOH RXD : %s : %s ", key.c_str(),
+  //        cbor::debug(cbor::decode(data)).c_str());
+  broker->incomingPub.emit({1, data});
 }
 
-Session::Session(Thread &thr, Config &cfg) : Actor(thr) { _zenoh_session = 0; }
+BrokerZenoh::BrokerZenoh(Thread &thr, Config &cfg) : Actor(thr) {
+  _zenoh_session = 0;
+}
 
 int Session::scout() {
   zn_properties_t *config = zn_config_default();
@@ -46,7 +46,7 @@ int Session::scout() {
   return 0;
 }
 
-int Session::open() {
+int BrokerZenoh::connect() {
   zn_properties_t *config = zn_config_default();
   //   zn_properties_insert(config, ZN_CONFIG_LISTENER_KEY,
   //   z_string_make(US_WEST));
@@ -57,7 +57,7 @@ int Session::open() {
   return _zenoh_session == 0 ? -1 : 0;
 }
 
-void Session::close() {
+void BrokerZenoh::disconnect() {
   for (auto tuple : _subscribers) {
     zn_undeclare_subscriber(tuple.second);
   }
@@ -67,7 +67,7 @@ void Session::close() {
   // _zenoh_session = NULL;
 }
 
-int Session::subscribe(string resource) {
+int BrokerZenoh::subscriber(string resource) {
   if (_subscribers.find(resource) == _subscribers.end()) {
     zn_subscriber_t *sub =
         zn_declare_subscriber(_zenoh_session, zn_rname(resource.c_str()),
@@ -81,16 +81,25 @@ int Session::subscribe(string resource) {
   return 0;
 }
 
-int Session::publish(string topic, bytes &bs) {
+int BrokerZenoh::publisher(int id, string key) {
+  if (_publishers.find(id) == _publishers.end()) {
+    zn_reskey_t reskey = resource(key);
+    zn_publisher_t *pub = zn_declare_publisher(s, reskey);
+    if (pub == 0) WARN(" unable to declar publisher %s", key.c_str());
+    _publishers.emplace(id, pub);
+  }
+  return 0;
+}
+
+int BrokerZenoh::publish(int topic, bytes &bs) {
   return zn_write(_zenoh_session, zn_rname(topic.c_str()), bs.data(),
                   bs.size());
 }
 
-ResourceKey Session::resource(string topic) {
-
-  zn_reskey_t rid = zn_rid(zn_declare_resource(_zenoh_session, zn_rname(topic.c_str())));
-  INFO(" resource id %ld ",  rid.id);
-  return rid.id;
+zn_reskey_t BrokerZenoh::resource(string topic) {
+  zn_reskey_t rid =
+      zn_rid(zn_declare_resource(_zenoh_session, zn_rname(topic.c_str())));
+  return rid;
 }
 
 vector<Message> Session::query(string uri) {
