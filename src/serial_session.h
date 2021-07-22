@@ -1,7 +1,6 @@
 #ifndef _SESSION_SERAIL_H_
 #define _SESSION_SERIAL_H_
 #include <limero.h>
-#include <listener.h>
 #include <serial.h>
 #include <util.h>
 typedef enum { CMD_OPEN, CMD_CLOSE } TcpCommand;

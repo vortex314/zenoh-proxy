@@ -27,7 +27,7 @@ public:
       : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data)
                                 {
                                   msg = cbor::decode(data);
-                                  INFO(" msg %s", cbor::debug(msg).c_str());
+                                  INFO(" uC RXD CBOR %s", cbor::debug(msg).c_str());
                                   return msg.is_array();
                                 }){};
 };
@@ -69,12 +69,10 @@ public:
 
   bool handleFrame(bytes &bs)
   {
-    INFO(" ");
     if (bs.size() == 0)
       return false;
     if (ppp_deframe(_cleanData, bs))
     {
-      INFO("cleanData : %d ", _cleanData.size());
       emit(_cleanData);
       return true;
     }
@@ -87,7 +85,6 @@ public:
 
   void handleRxd(const bytes &bs)
   {
-    INFO(" ");
     for (uint8_t b : bs)
     {
       if (b == PPP_FLAG_CHAR)

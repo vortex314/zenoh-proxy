@@ -5,8 +5,8 @@
 BrokerSerial::BrokerSerial(Thread &thr, Stream &serial)
     : Broker(thr),
       _serial(serial),
-      keepAliveTimer(thr, 3000, true),
-      connectTimer(thr, 2000, true) {}
+      keepAliveTimer(thr, 1000, true),
+      connectTimer(thr, 10000, true) {}
 BrokerSerial::~BrokerSerial() {}
 
 void BrokerSerial::init() {
@@ -19,7 +19,7 @@ void BrokerSerial::init() {
 
   serialRxd >> _bytesToFrame >> _frameToCbor;
   _frameToCbor >> incomingCbor;
-  serialRxd >> [&](const bytes &bs) { INFO("uC RXD %d ", bs.size()); };
+//  serialRxd >> [&](const bytes &bs) { INFO("uC RXD %d ", bs.size()); };
   _frameToCbor >>
       [&](const cbor &cb) { INFO("uC RXD CBOR %s ", cbor::debug(cb).c_str()); };
   outgoingCbor >> _toFrame;
@@ -35,7 +35,7 @@ void BrokerSerial::init() {
     else
       _toFrame.on(cbor::array{B_CONNECT, brokerSrcPrefix});
   };
-  incomingCbor >> filter([&](const cbor &in) {
+  incomingCbor >> filter<cbor>([&](const cbor &in) ->bool{
     int msgType = in.to_array()[0];
     return msgType == B_CONNECT;
   }) >>
@@ -53,7 +53,7 @@ void BrokerSerial::init() {
         }
       };
 
-  uptimeSub >> [&](const uint64_t &t) {
+  *uptimeSub >> [&](const uint64_t &t) {
     latencyPub->on(t - Sys::millis());
     _loopbackReceived = Sys::millis();
   };
@@ -72,6 +72,6 @@ void BrokerSerial::onRxd(void *me) {
   while (brk->_serial.available()) {
     data.push_back(brk->_serial.read());
   }
-  INFO(" data : %d ", data.size());
+//  INFO(" data : %d ", data.size());
   brk->serialRxd.emit(data);
 }

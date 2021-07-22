@@ -14,7 +14,6 @@ Log logger(2048);
 #include <broker_zenoh.h>
 #include <cbor11.h>
 #include <ppp_frame.h>
-#include <serial_protocol.h>
 #include <serial_session.h>
 //#include <zenoh_session.h>
 
@@ -27,7 +26,7 @@ const char *CMD_TO_STRING[] = {"B_CONNECT",   "B_DISCONNECT", "B_SUBSCRIBER",
 Config loadConfig(int argc, char **argv) { return Config(); };
 //=================================================================
 class BytesToCbor : public LambdaFlow<bytes, cbor> {
- public:
+public:
   BytesToCbor()
       : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data) {
           msg = cbor::decode(data);
@@ -41,7 +40,7 @@ class BytesToCbor : public LambdaFlow<bytes, cbor> {
 class CborFilter : public LambdaFlow<cbor, cbor> {
   int _msgType;
 
- public:
+public:
   CborFilter(int msgType)
       : LambdaFlow<cbor, cbor>([this](cbor &out, const cbor &in) {
           out = in;
@@ -58,7 +57,7 @@ class FrameExtractor : public Flow<bytes, bytes> {
   uint64_t _lastFrameFlag;
   uint32_t _frameTimeout = 1000;
 
- public:
+public:
   FrameExtractor() : Flow<bytes, bytes>() {}
   void on(const bytes &bs) { handleRxd(bs); }
   void toStdout(const bytes &bs) {
@@ -71,7 +70,8 @@ class FrameExtractor : public Flow<bytes, bytes> {
   }
 
   bool handleFrame(bytes &bs) {
-    if (bs.size() == 0) return false;
+    if (bs.size() == 0)
+      return false;
     if (ppp_deframe(_cleanData, bs)) {
       emit(_cleanData);
       return true;
@@ -102,7 +102,7 @@ class FrameExtractor : public Flow<bytes, bytes> {
 };
 //=========================================================================
 class FrameGenerator : public LambdaFlow<cbor, bytes> {
- public:
+public:
   FrameGenerator()
       : LambdaFlow<cbor, bytes>([&](bytes &out, const cbor &in) {
           int msgType = in.to_array()[0];
@@ -138,10 +138,7 @@ int main(int argc, char **argv) {
   // CBOR de-/serialization
   toFrame >> serial.outgoing;
   serial.incoming >> bytesToFrame >> frameToCbor;
-  // ZENOH feedbacks
-  broker.incomingPub >> [&](const PubMsg &msg) {
-    toFrame.on(cbor::array{Z_PUBLISH, msg.id, msg.value});
-  };
+
   // filter commands from uC
   frameToCbor >> CborFilter::nw(B_CONNECT) >> [&](const cbor &param) {
     int rc = broker.connect();
@@ -151,15 +148,25 @@ int main(int argc, char **argv) {
   frameToCbor >> CborFilter::nw(B_SUBSCRIBER) >> [&](const cbor &param) {
     int id = param.to_array()[2];
     string key = param.to_array()[1];
-    int rc = broker.subscriber(id, key);
-    if (rc) WARN(" subscriber (%s,..) = %d ", key.c_str(), rc);
+    int rc = broker.subscriber(id, key, [&](const bytes &bs) {
+      toFrame.on(cbor::array{B_PUBLISH, id, bs});
+    });
+    if (rc)
+      WARN(" subscriber (%s,..) = %d ", key.c_str(), rc);
   };
 
   frameToCbor >> CborFilter::nw(B_PUBLISHER) >> [&](const cbor &param) {
     int id = param.to_array()[2];
     string key = param.to_array()[1];
     int rc = broker.publisher(id, key);
-    if (rc) WARN("  publish (%s,..) = %d ", key.c_str(), rc);
+    if (rc)
+      WARN("  publish (%s,..) = %d ", key.c_str(), rc);
+  };
+
+  frameToCbor >> CborFilter::nw(B_PUBLISH) >> [&](const cbor &param) {
+    int id = param.to_array()[1];
+    bytes data = param.to_array()[2];
+    int rc = broker.publish(id, data);
   };
 
   frameToCbor >> CborFilter::nw(B_DISCONNECT) >>
@@ -182,7 +189,8 @@ int main(int argc, char **argv) {
     };*/
 
   serial.connected >> [&](const bool isConnected) {
-    if (!isConnected) broker.disconnect();
+    if (!isConnected)
+      broker.disconnect();
   };
 
   workerThread.run();

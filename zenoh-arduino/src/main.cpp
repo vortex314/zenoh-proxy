@@ -64,7 +64,6 @@ void loop()
   mainThread.loop();
   if (Serial.available())
   {
-    INFO(" ");
     BrokerSerial::onRxd(&brkr);
   }
 }

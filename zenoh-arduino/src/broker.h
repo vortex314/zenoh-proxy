@@ -82,15 +82,15 @@ Subscriber<T> &Broker::subscriber(string name) {
   s->lambda([&](T &t, const cbor &in) {
     int cmd = in.to_array()[0];
     int msgType = in.to_array()[1];
-    if (cmd == B_PUBLISH && msgType == id()) {
-      t = int.to_array()[2];
+    if (cmd == B_PUBLISH && msgType == s->id()) {
+      t = in.to_array()[2];
       return true;
     }
     return false;
   });
   _subscribers.push_back(s);
   incomingCbor >> s;
-    INFO(" created subscriber %s : %X ", name.c_str(), p);
+    INFO(" created subscriber %s : %X ", name.c_str(), s);
   return *s;
 }
 };  // namespace broker

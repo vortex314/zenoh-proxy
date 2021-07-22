@@ -2,17 +2,16 @@
 #include <broker_zenoh.h>
 #include <cbor11.h>
 
-void BrokerZenoh::dataHandler(const zn_sample_t *sample, const void *arg) {
-  BrokerZenoh *broker = (BrokerZenoh *)arg;
+void BrokerZenoh::subscribeHandler(const zn_sample_t *sample, const void *arg) {
+  Sub *pSub = (Sub *)arg;
   string key(sample->key.val, sample->key.len);
   bytes data(sample->value.val, sample->value.val + sample->value.len);
-  //    INFO(" ZENOH RXD : %s : %s ", key.c_str(),
-  //        cbor::debug(cbor::decode(data)).c_str());
-  broker->incomingPub.emit({1, data});
+  INFO(" ZENOH RXD : %s : %s ", key.c_str(),
+       cbor::debug(cbor::decode(data)).c_str());
+  pSub->callback(data);
 }
 
-BrokerZenoh::BrokerZenoh(Thread &thr, Config &cfg)
-    : Actor(thr), incomingPub(10) {
+BrokerZenoh::BrokerZenoh(Thread &thr, Config &cfg) : Actor(thr) {
   _zenoh_session = 0;
 }
 
@@ -32,9 +31,9 @@ int BrokerZenoh::scout() {
         pid = bytes(hello.pid.val, hello.pid.val + hello.pid.len);
       }
       INFO(" whatami: %s pid : %s ",
-           hello.whatami == ZN_ROUTER ? "ZN_ROUTER"
-           : hello.whatami == ZN_PEER ? "ZN_PEER"
-                                      : "OTHER",
+           hello.whatami == ZN_ROUTER
+               ? "ZN_ROUTER"
+               : hello.whatami == ZN_PEER ? "ZN_PEER" : "OTHER",
            hexDump(pid, "").c_str());
       for (unsigned int i = 0; i < locators.len; i++) {
         INFO(" locator : %s ", locators.val[i]);
@@ -54,7 +53,7 @@ int BrokerZenoh::connect() {
   //   zn_properties_insert(config, ZN_CONFIG_LISTENER_KEY,
   //   z_string_make(US_WEST));
 
-  if (_zenoh_session == 0)  // idempotent
+  if (_zenoh_session == 0) // idempotent
     _zenoh_session = zn_open(config);
   INFO("zn_open() %s.", _zenoh_session == 0 ? "failed" : "succeeded");
   return _zenoh_session == 0 ? -1 : 0;
@@ -62,11 +61,11 @@ int BrokerZenoh::connect() {
 
 int BrokerZenoh::disconnect() {
   for (auto tuple : _subscribers) {
-    zn_undeclare_subscriber(tuple.second);
+    zn_undeclare_subscriber(tuple.second->zn_subscriber);
   }
   _subscribers.clear();
   for (auto tuple : _publishers) {
-    zn_undeclare_publisher(tuple.second);
+    zn_undeclare_publisher(tuple.second->zn_publisher);
   }
   _publishers.clear();
 
@@ -76,13 +75,16 @@ int BrokerZenoh::disconnect() {
   // _zenoh_session = NULL;
 }
 
-int BrokerZenoh::subscriber(int id, string pattern) {
+int BrokerZenoh::subscriber(int id, string pattern,
+                            std::function<void(const bytes &)> callback) {
   INFO(" Zenoh subscriber %d : %s ", id, pattern.c_str());
   if (_subscribers.find(id) == _subscribers.end()) {
-    zn_subscriber_t *sub =
+    Sub *sub = new Sub({id, pattern, callback, 0});
+    zn_subscriber_t *zsub =
         zn_declare_subscriber(_zenoh_session, zn_rname(pattern.c_str()),
-                              zn_subinfo_default(), dataHandler, this);
-    if (sub == NULL) {
+                              zn_subinfo_default(), subscribeHandler, sub);
+    sub->zn_subscriber = zsub;
+    if (zsub == NULL) {
       WARN(" subscription failed for %s ", pattern.c_str());
       return -1;
     }
@@ -92,25 +94,28 @@ int BrokerZenoh::subscriber(int id, string pattern) {
 }
 
 int BrokerZenoh::publisher(int id, string key) {
+  INFO(" Zenoh publisher %d : %s ", id, key.c_str());
   if (_publishers.find(id) == _publishers.end()) {
     zn_reskey_t reskey = resource(key);
     zn_publisher_t *pub = zn_declare_publisher(_zenoh_session, reskey);
-    if (pub == 0) WARN(" unable to declare publisher %s", key.c_str());
-    _publishers.emplace(id, pub);
-    _pub_reskeys.emplace(id, reskey);
+    if (pub == 0)
+      WARN(" unable to declare publisher %s", key.c_str());
+    Pub *pPub = new Pub{id, key, reskey, pub};
+    _publishers.emplace(id, pPub);
   }
   return 0;
 }
 
 int BrokerZenoh::publish(int id, bytes &bs) {
+  INFO("publish");
   auto it = _publishers.find(id);
   if (it != _publishers.end()) {
-    zn_publisher_t *pp = it->second;
-    return zn_write(_zenoh_session, _pub_reskeys.find(id)->second, bs.data(),
-                    bs.size());
-  }
-
-  else {
+    int rc =
+        zn_write(_zenoh_session, it->second->zn_reskey, bs.data(), bs.size());
+    if (rc)
+      WARN("zn_write failed.");
+    return rc;
+  } else {
     INFO(" publish id %d unknown. ", id);
     return ENOENT;
   }

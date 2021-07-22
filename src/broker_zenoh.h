@@ -17,29 +17,41 @@ struct PubMsg {
   bytes value;
 };
 
+struct Sub {
+  int id;
+  string key;
+  std::function<void(const bytes &)> callback;
+  zn_subscriber_t *zn_subscriber;
+};
+
+struct Pub {
+  int id;
+  string key;
+  zn_reskey_t zn_reskey;
+  zn_publisher_t *zn_publisher;
+};
+
 class BrokerZenoh : public Actor {
   zn_session_t *_zenoh_session;
-  unordered_map<int, zn_subscriber_t *> _subscribers;
-  unordered_map<int, zn_publisher_t *> _publishers;
-  unordered_map<int, zn_reskey_t> _pub_reskeys;
-  static void dataHandler(const zn_sample_t *, const void *);
+  unordered_map<int, Sub *> _subscribers;
+  unordered_map<int, Pub *> _publishers;
+  static void subscribeHandler(const zn_sample_t *, const void *);
   zn_reskey_t resource(string topic);
   int scout();
 
- public:
+public:
   ValueSource<bool> connected;
-  QueueFlow<PubMsg> incomingPub;
 
   BrokerZenoh(Thread &, Config &);
   int init();
   int connect();
   int disconnect();
   int publisher(int, string);
-  int subscriber(int, string);
+  int subscriber(int, string, std::function<void(const bytes &)>);
   int publish(int, bytes &);
   int onSubscribe(SubscribeCallback);
   int unSubscriber(int);
   vector<PubMsg> query(string);
 };
 // namespace zenoh
-#endif  // _ZENOH_SESSION_h_
+#endif // _ZENOH_SESSION_h_
