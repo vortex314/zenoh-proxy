@@ -26,19 +26,6 @@ BAUDRATE BAUDRATE_TABLE[] = {
     {3500000, B3500000}, {4000000, B4000000}};
 
 #include <iostream>
-/*
-void logRaw(const string line) {
-  cout << line << flush;
-  logger.writer()((char *)line.c_str(), line.size());
-}
-
-std::string stringify(std::string s) {
-  std::string result;
-  result += '"';
-  result += s;
-  result += '"';
-  return result;
-}*/
 
 #define USB() logger.application(_port.c_str())
 //=====================================================================================
@@ -64,28 +51,26 @@ int baudToValue(int symbol) {
 //=====================================================================================
 int Serial::port(string port) {
   _port = port;
-  if (_port.find("/dev/tty") == 0) {
-    _portShort = _port.substr(8);
-  } else {
-    size_t pos = _port.rfind('/');
-    if (pos == string::npos) {
-      _portShort = _port;
-    } else {
-      _portShort = _port.substr(pos + 1);
-    }
-  }
   return 0;
 }
 
 const string &Serial::port() { return _port; }
-//=====================================================================================
-int Serial::init() {
-  FD_ZERO(&_rfds);
-  FD_ZERO(&_wfds);
-  FD_ZERO(&_efds);
-  _maxFd = 0;
-  return 0;
+
+const string Serial::shortName() const {
+  if (_port.find("/dev/tty") == 0) {
+    return _port.substr(8);
+  } else {
+    size_t pos = _port.rfind('/');
+    if (pos == string::npos) {
+      return _port;
+    } else {
+      return _port.substr(pos + 1);
+    }
+  }
 }
+
+//=====================================================================================
+int Serial::init() { return 0; }
 //=====================================================================================
 int Serial::connect() {
   struct termios options;
@@ -142,7 +127,6 @@ int Serial::connect() {
     _fd = -1;
     return errno;
   }
-  setFds();
   _connected = true;
 
   modeInfo();
@@ -155,12 +139,10 @@ int Serial::disconnect() {
     WARN("closing serial fd failed => errno : %d : %s", _port.c_str(), errno,
          strerror(errno));
     _fd = -1;
-    setFds();
     _connected = false;
     return errno;
   };
   _fd = -1;
-  setFds();
   _connected = false;
   return 0;
 }
@@ -223,49 +205,8 @@ int Serial::baudrate(uint32_t br) {
 }
 
 uint32_t Serial::baudrate() { return baudToValue(_baudrate); }
-//=====================================================================================
 int Serial::fd() { return _fd; }
 
-void Serial::setFds() {
-  FD_ZERO(&_rfds);
-  FD_ZERO(&_wfds);
-  FD_ZERO(&_efds);
-  _maxFd = 0;
-  if (_fd != -1) {
-    FD_SET(_fd, &_rfds);
-    FD_SET(_fd, &_efds);
-    if (_maxFd < _fd) _maxFd = _fd;
-  }
-  _maxFd += 1;
-}
-
-int Serial::waitForRxd(uint32_t timeout) {
-  struct timeval tv;
-  int rc;
-  tv.tv_sec = timeout / 1000;
-  tv.tv_usec = (timeout * 1000) % 1000000;
-  fd_set rfds = _rfds;
-  fd_set efds = _efds;
-  rc = select(_maxFd, &rfds, NULL, &efds, &tv);
-  if (rc == 0) {  // timeout
-    DEBUG(" select timeout.");
-    return ETIMEDOUT;
-  } else if (rc < 0) {
-    WARN("select() : error : %s (%d)", strerror(errno), errno);
-    return EIO;
-  } else if (rc > 0) {  // one of the fd was set
-    if (FD_ISSET(_fd, &rfds)) return 0;
-  }
-  return EIO;
-}
-
-void wait() {
-  // wait 1 msec
-  struct timespec tim;
-  tim.tv_sec = 0;
-  tim.tv_nsec = 1000000;  // 1 ms
-  nanosleep(&tim, NULL);
-}
 //=====================================================================================
 int Serial::modeInfo() {
   int mode;
@@ -282,45 +223,43 @@ int Serial::modeInfo() {
   return 0;
 }
 //=====================================================================================
-
-int Serial::modeRun() {
-  int flags;
-  // RESET
-  wait();
-  flags = TIOCM_DTR;
-  int rc = ioctl(_fd, TIOCMBIS, &flags);  // set DTR pin
+static bool wait(uint32_t msec = 10) {
+  // wait 1 msec
+  struct timespec tim;
+  tim.tv_sec = msec / 1000;
+  tim.tv_nsec = (msec * 1000000) % 1000000000;  // 1 ms
+  int rc = nanosleep(&tim, NULL);
+  if (rc) WARN("nanosleep()= %s (%d)", strerror(errno), errno);
+  return rc == 0;
+}
+static bool setBit(int fd, int flags) {
+  int rc = ioctl(fd, TIOCMBIS, &flags);  // set DTR pin
   if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  flags = TIOCM_RTS;
-  rc = ioctl(_fd, TIOCMBIC, &flags);  // clear RTS pin
+  return rc == 0;
+}
+static bool clrBit(int fd, int flags) {
+  int rc = ioctl(fd, TIOCMBIC, &flags);
   if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  wait();
-  // raise RTS & DTR
-  flags = TIOCM_RTS;
-  rc = ioctl(_fd, TIOCMBIS, &flags);  // Set RTS & DTR pin
-  if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  wait();
-  flags = TIOCM_DTR;
-  rc = ioctl(_fd, TIOCMBIS, &flags);  // Set RTS & DTR pin
-  if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  return rc;
+  return rc == 0;
 }
 //=====================================================================================
-int Serial::modeProgram() {
-  int flags;
-  // RESET
-  wait();
-  flags = TIOCM_DTR;
-  int rc = ioctl(_fd, TIOCMBIS, &flags);  // set DTR pin
-  if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  flags = TIOCM_RTS;
-  rc = ioctl(_fd, TIOCMBIC, &flags);  // clear RTS pin
-  if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  // PROGRAM mode
-  flags = TIOCM_RTS;
-  rc = ioctl(_fd, TIOCMBIS, &flags);  // set RTS pin
-  if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  flags = TIOCM_DTR;
-  if (rc) WARN("ioctl()= %s (%d)", strerror(errno), errno);
-  rc = ioctl(_fd, TIOCMBIC, &flags);  // clear DTR pin
-  return rc;
+/*
+DTR   RTS   ENABLE  IO0  Mode
+1     1     1       1     RUN
+0     0     1       1     RUN
+1     0     0       0     RESET
+0     1     1       0     PROGRAM
+*/
+bool Serial::modeRun() {
+  // RESET & RUN
+  return wait(10) && setBit(_fd, TIOCM_DTR) && clrBit(_fd, TIOCM_RTS) &&
+         wait(10) && setBit(_fd, TIOCM_RTS) && setBit(_fd, TIOCM_DTR) &&
+         wait(10);
+}
+//=====================================================================================
+bool Serial::modeProgram() {
+  // RESET & PROG
+  return wait(10) && setBit(_fd, TIOCM_DTR) && clrBit(_fd, TIOCM_RTS) &&
+         wait(10) && setBit(_fd, TIOCM_RTS) && clrBit(_fd, TIOCM_DTR) &&
+         wait(10);
 }

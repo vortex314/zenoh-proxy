@@ -17,15 +17,7 @@
 #include <map>
 #include <vector>
 
-/*
 
-DTR   RTS   ENABLE  IO0  Mode
-1     1     1       1     RUN
-0     0     1       1     RUN
-1     0     0       0     RESET
-0     1     1       0     PROGRAM
-
-*/
 
 using namespace std;
 
@@ -55,8 +47,8 @@ class Serial {
   int rxd(bytes &buffer);
   int txd(const bytes &);
 
-  int modeRun();
-  int modeProgram();
+  bool modeRun();
+  bool modeProgram();
   int modeInfo();
 
   // properties

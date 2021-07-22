@@ -89,6 +89,8 @@ Subscriber<T> &Broker::subscriber(string name) {
     return false;
   });
   _subscribers.push_back(s);
+  incomingCbor >> s;
+    INFO(" created subscriber %s : %X ", name.c_str(), p);
   return *s;
 }
 };  // namespace broker
