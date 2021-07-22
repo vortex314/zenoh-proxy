@@ -42,14 +42,8 @@ class Serial {
   string _portShort;  // USB0
   int _baudrate;
   int _fd = 0;
-  fd_set _rfds;
-  fd_set _wfds;
-  fd_set _efds;
-  int _maxFd;
-
   uint8_t _separator;
   bool _connected = false;
-  void setFds();
 
  public:
   Serial();
@@ -58,7 +52,6 @@ class Serial {
   int init();
   int connect();
   int disconnect();
-  int waitForRxd(uint32_t milliSec);
   int rxd(bytes &buffer);
   int txd(const bytes &);
 
@@ -75,7 +68,7 @@ class Serial {
   int fd();
   bool connected() { return _connected; }
 
-  const string &portShort(void) const { return _portShort; };
+  const string shortName(void) const;
 };
 
 #endif
