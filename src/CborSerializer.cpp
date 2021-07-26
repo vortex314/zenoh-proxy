@@ -49,7 +49,7 @@ class CborSerializer {
   }
 
   CborSerializer &member(const char *name, double &t, const char *desc) {
-    _err = cbor_encode_double(&_encoder, t.data(), t.size());
+    _err = cbor_encode_double(&_encoder, t);
     assert(_err == 0);
     return *this;
   }
