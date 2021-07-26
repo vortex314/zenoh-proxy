@@ -93,7 +93,8 @@
         "ios": "cpp",
         "locale": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "forward_list": "cpp"
     },
     "C_Cpp.errorSquiggles": "Enabled",
     "editor.formatOnSave": true,

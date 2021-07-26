@@ -15,9 +15,9 @@ struct MsgBase {
   int msgType;
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
-    return r.begin()
-        .member(msgType, "msgType", "type of polymorphic message")
-        .end();
+    r.begin().member(msgType, "msgType", "type of polymorphic message").end();
+ //   INFO(" looking for int %d ", msgType);
+    return r;
   }
 };
 

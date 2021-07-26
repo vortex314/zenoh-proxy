@@ -71,11 +71,12 @@ void BrokerSerial::init()
     }
   };
   _bytesToFrame >> filter<bytes>([&](const bytes &in) -> bool
-                                {
-                                  INFO("filter %s",cborDump(in).c_str());
-                                  MsgBase msgBase;
-                                  return (msgBase.reflect(_fromCbor.fromBytes(in)).success() && msgBase.msgType == B_CONNECT);
-                                }) >>
+                                 {
+                                   INFO("filter %s", cborDump(in).c_str());
+                                   MsgBase msgBase;
+                                   INFO(" success : %s msgType : %d ", msgBase.reflect(_fromCbor.fromBytes(in)).success() ? "true" : "false", msgBase.msgType );
+                                   return (msgBase.reflect(_fromCbor.fromBytes(in)).success() && msgBase.msgType == B_CONNECT);
+                                 }) >>
       [&](const bytes &in)
   {
     connected = true;

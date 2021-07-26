@@ -12,11 +12,11 @@ using namespace std;
 Log logger(2048);
 #include <BrokerZenoh.h>
 #include <CborDeserializer.h>
-#include <CborSerializer.h>
 #include <CborDump.h>
+#include <CborSerializer.h>
 #include <Display.h>
-#include <broker_protocol.h>
 #include <Frame.h>
+#include <broker_protocol.h>
 #include <serial_session.h>
 const int MsgPublish::TYPE;
 const int MsgPublisher::TYPE;
@@ -40,8 +40,10 @@ class MsgFilter : public LambdaFlow<bytes, bytes> {
  public:
   MsgFilter(int msgType)
       : LambdaFlow<bytes, bytes>([this](bytes &out, const bytes &in) {
+ //         INFO(" filter on msgType : %d in %s ", _msgType,cborDump(in).c_str());
           if (msgBase.reflect(_fromCbor.fromBytes(in)).success() &&
               msgBase.msgType == _msgType) {
+//            INFO(" found msgType : %d  ", msgBase.msgType);
             out = in;
             return true;
           }
@@ -76,8 +78,8 @@ int main(int argc, char **argv) {
   serial.incoming >> bytesToFrame;
   toFrame >> serial.outgoing;
 
-  bytesToFrame >> [&](const bytes& bs){ COUT << "RXD " << cborDump(bs) << endl ;};
-  
+  bytesToFrame >>
+      [&](const bytes &bs) { INFO("RXD %s", cborDump(bs).c_str()); };
 
   // filter commands from uC
   bytesToFrame >> MsgFilter::nw(B_CONNECT) >> [&](const bytes &frame) {

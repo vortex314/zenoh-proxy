@@ -5,7 +5,7 @@
 
 class CborDeserializer {
   CborParser _decoder;
-  CborValue _it;
+  CborValue _rootIt,_it;
   CborError _err;
   uint8_t *_buffer;
   size_t _size;
