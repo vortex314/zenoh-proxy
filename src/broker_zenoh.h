@@ -20,7 +20,7 @@ struct PubMsg {
 struct Sub {
   int id;
   string key;
-  std::function<void(const bytes &)> callback;
+  std::function<void(int,const bytes &)> callback;
   zn_subscriber_t *zn_subscriber;
 };
 
@@ -47,7 +47,7 @@ public:
   int connect();
   int disconnect();
   int publisher(int, string);
-  int subscriber(int, string, std::function<void(const bytes &)>);
+  int subscriber(int, string, std::function<void(int,const bytes &)>);
   int publish(int, bytes &);
   int onSubscribe(SubscribeCallback);
   int unSubscriber(int);

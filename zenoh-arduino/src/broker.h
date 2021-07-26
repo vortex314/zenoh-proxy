@@ -12,14 +12,14 @@ class Resource {
   int _id;
   string _key;
 
- public:
+public:
   Resource(int i, string k) : _id(i), _key(k){};
   int id() { return _id; }
   const string &key() { return _key; }
 };
 template <typename T>
 class Subscriber : public LambdaFlow<cbor, T>, public Resource {
- public:
+public:
   Subscriber(int id, string key)
       : LambdaFlow<cbor, T>([](T &t, const cbor &data) {
           t = data.to_array()[2];
@@ -30,10 +30,11 @@ class Subscriber : public LambdaFlow<cbor, T>, public Resource {
 
 template <typename T>
 class Publisher : public LambdaFlow<T, cbor>, public Resource {
- public:
+public:
   Publisher(int id, string key)
       : LambdaFlow<T, cbor>([&](cbor &cb, const T &t) {
           cb = cbor::array{B_PUBLISH, Resource::id(), t};
+          MsgPublisher msg = {Resource::id(),};
           INFO("%s : %s ", Resource::key().c_str(), cbor::debug(cb).c_str());
           return true;
         }),
@@ -41,7 +42,7 @@ class Publisher : public LambdaFlow<T, cbor>, public Resource {
 };
 
 class Broker : public Actor {
- public:
+public:
   ValueFlow<cbor> incomingCbor;
   ValueFlow<cbor> outgoingCbor;
   int _resourceId = 0;
@@ -51,16 +52,13 @@ class Broker : public Actor {
   string brokerSrcPrefix = "src/esp32/";
   string brokerDstPrefix = "dst/esp32/";
 
- public:
+public:
   Broker(Thread thr) : Actor(thr){};
-  template <typename T>
-  Subscriber<T> &subscriber(string);
-  template <typename T>
-  Publisher<T> &publisher(string);
+  template <typename T> Subscriber<T> &subscriber(string);
+  template <typename T> Publisher<T> &publisher(string);
 };
 
-template <typename T>
-Publisher<T> &Broker::publisher(string name) {
+template <typename T> Publisher<T> &Broker::publisher(string name) {
   string topic = name;
   if (!(topic.find("src/") == 0 || topic.find("dst/") == 0)) {
     topic = brokerSrcPrefix + name;
@@ -72,25 +70,29 @@ Publisher<T> &Broker::publisher(string name) {
   return *p;
 }
 
-template <typename T>
-Subscriber<T> &Broker::subscriber(string name) {
+template <typename T> Subscriber<T> &Broker::subscriber(string name) {
   string topic = name;
   if (!(topic.find("src/") == 0 || topic.find("dst/") == 0)) {
     topic = brokerDstPrefix + name;
   }
   Subscriber<T> *s = new Subscriber<T>(_resourceId++, topic);
   s->lambda([&](T &t, const cbor &in) {
+    INFO(" ");
     int cmd = in.to_array()[0];
-    int msgType = in.to_array()[1];
-    if (cmd == B_PUBLISH && msgType == s->id()) {
+    INFO(" ");
+    int id = in.to_array()[1];
+    INFO(" ");
+    if (cmd == B_PUBLISH && id == s->id()) {
+      INFO(" ");
       t = in.to_array()[2];
+      INFO(" ");
       return true;
     }
     return false;
   });
   _subscribers.push_back(s);
   incomingCbor >> s;
-    INFO(" created subscriber %s : %X ", name.c_str(), s);
+  INFO(" created subscriber %s : %X ", name.c_str(), s);
   return *s;
 }
-};  // namespace broker
+}; // namespace broker

@@ -46,10 +46,10 @@ void BrokerSerial::init() {
         INFO(" subscribers : %d publishers : %d ", _subscribers.size(),
              _publishers.size());
         for (auto sub : _subscribers) {
-          _toFrame.on(cbor::array{B_SUBSCRIBER, sub->key(), sub->id()});
+          _toFrame.on(cbor::array{B_SUBSCRIBER, sub->id(), sub->key()});
         }
         for (auto pub : _publishers) {
-          _toFrame.on(cbor::array{B_PUBLISHER, pub->key(), pub->id()});
+          _toFrame.on(cbor::array{B_PUBLISHER, pub->id(), pub->key()});
         }
       };
 

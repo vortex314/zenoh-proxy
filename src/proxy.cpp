@@ -146,10 +146,10 @@ int main(int argc, char **argv) {
   };
 
   frameToCbor >> CborFilter::nw(B_SUBSCRIBER) >> [&](const cbor &param) {
-    int id = param.to_array()[2];
     string key = param.to_array()[1];
-    int rc = broker.subscriber(id, key, [&](const bytes &bs) {
-      toFrame.on(cbor::array{B_PUBLISH, id, bs});
+    int id = param.to_array()[2];
+    int rc = broker.subscriber(id, key, [&](int id,const bytes &bs) {
+      toFrame.on(cbor::array{B_PUBLISH, id, cbor::decode(bs)});
     });
     if (rc)
       WARN(" subscriber (%s,..) = %d ", key.c_str(), rc);
@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
 
   frameToCbor >> CborFilter::nw(B_PUBLISH) >> [&](const cbor &param) {
     int id = param.to_array()[1];
-    bytes data = param.to_array()[2];
+    bytes data = cbor::encode(param.to_array()[2]);
     int rc = broker.publish(id, data);
   };
 

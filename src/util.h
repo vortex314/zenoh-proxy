@@ -8,7 +8,7 @@ using namespace std;
 typedef vector<uint8_t> bytes;
 typedef JsonObject Config;
 
-string hexDump(bytes,const char* spacer=" ");
+string hexDump(bytes, const char *spacer = " ");
 string charDump(bytes);
 
 #define FNV_PRIME 16777619
@@ -20,5 +20,8 @@ constexpr uint32_t fnv1(uint32_t h, const char *s) {
 }
 
 constexpr uint32_t H(const char *s) { return fnv1(FNV_OFFSET, s); }
+
+#define COUT cout << " I " << __SHORT_FILE__ << ":" << __LINE__ << "\t| " 
+#define CERR cerr << " W " << __SHORT_FILE__ << ":" << __LINE__ << "\t| " 
 
 #endif

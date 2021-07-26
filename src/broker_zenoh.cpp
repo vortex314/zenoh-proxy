@@ -6,9 +6,9 @@ void BrokerZenoh::subscribeHandler(const zn_sample_t *sample, const void *arg) {
   Sub *pSub = (Sub *)arg;
   string key(sample->key.val, sample->key.len);
   bytes data(sample->value.val, sample->value.val + sample->value.len);
-  INFO(" ZENOH RXD : %s : %s ", key.c_str(),
+  INFO(" ZENOH RXD : %d =  %s : %s ", pSub->id,key.c_str(),
        cbor::debug(cbor::decode(data)).c_str());
-  pSub->callback(data);
+  pSub->callback(pSub->id,data);
 }
 
 BrokerZenoh::BrokerZenoh(Thread &thr, Config &cfg) : Actor(thr) {
@@ -76,7 +76,7 @@ int BrokerZenoh::disconnect() {
 }
 
 int BrokerZenoh::subscriber(int id, string pattern,
-                            std::function<void(const bytes &)> callback) {
+                            std::function<void(int,const bytes &)> callback) {
   INFO(" Zenoh subscriber %d : %s ", id, pattern.c_str());
   if (_subscribers.find(id) == _subscribers.end()) {
     Sub *sub = new Sub({id, pattern, callback, 0});

@@ -34,6 +34,7 @@ include_directories(
 ../limero/inc 
 ../limero/linux  
 ../cbor11
+../tinycbor/src
 /home/lieven/workspace/ArduinoJson/src )
 
 add_definitions(-DCATCH_CONFIG_DISABLE)
@@ -45,7 +46,19 @@ set (CMAKE_CXX_STANDARD 11)
  
 # set up our program
 add_executable(proxy)
+add_executable(snippets)
+add_executable(tiny)
 
+
+target_sources(snippets PRIVATE 
+  src/snippets.cpp 
+  src/util.cpp
+  ../cbor11/cbor11.cpp ) 
+
+  target_sources(tiny PRIVATE 
+  src/tiny.cpp 
+  src/util.cpp
+ ) 
 
 target_sources(proxy PRIVATE src/proxy.cpp 
   src/ppp_frame.cpp 
@@ -59,6 +72,20 @@ target_sources(proxy PRIVATE src/proxy.cpp
 target_link_libraries(proxy 
 -L/home/lieven/workspace/limero/linux/build -llimero 
 -L/usr/local/lib/ -lzenohc
+-lpthread  
+-lrt  
+-latomic)
+
+target_link_libraries(snippets 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-L/usr/local/lib/ -lzenohc
+-lpthread  
+-lrt  
+-latomic)
+
+target_link_libraries(tiny 
+-L/home/lieven/workspace/limero/linux/build -llimero 
+-L/home/lieven/workspace/tinycbor/lib -l:libtinycbor.a
 -lpthread  
 -lrt  
 -latomic)
