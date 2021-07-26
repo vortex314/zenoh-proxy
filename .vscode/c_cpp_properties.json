@@ -7,6 +7,7 @@
                 "${workspaceFolder}/../Common/",
                 "${workspaceFolder}/../limero/inc/",
                 "${workspaceFolder}/../zenoh-c/include/",
+                "${workspaceFolder}/../tinycbor/src",
                 "${workspaceFolder}/src/",
                 "${workspaceFolder}/../ArduinoJson/src",
                 "${workspaceFolder}/../cbor11",

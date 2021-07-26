@@ -1,5 +1,4 @@
 #include <Log.h>
-#include <broker_protocol.h>
 #include <cbor.h>
 #include <util.h>
 
@@ -7,12 +6,10 @@
 #include <iostream>
 #include <sstream>
 using namespace std;
-const int MsgPublish::TYPE;
-const int MsgPublisher::TYPE;
-const int MsgSubscriber::TYPE;
 
 class CborSerializer {
   uint32_t _capacity;
+  size_t _size;
   CborError _err;
   CborEncoder _encoderRoot;
   CborEncoder _encoder;
@@ -63,39 +60,21 @@ class CborSerializer {
     return *this;
   }
 
-  bytes toBytes() {
-    _err = cbor_encoder_close_container(&_encoderRoot, &_encoder);
-    assert(_err == 0);
-    int sz = cbor_encoder_get_buffer_size(&_encoderRoot, _buffer);
-    return bytes(_buffer, _buffer + sz);
-  }
-  CborSerializer &operator()() {
+  CborSerializer &begin() {
     cbor_encoder_init(&_encoderRoot, _buffer, _capacity, 0);
     _err = cbor_encoder_create_array(&_encoderRoot, &_encoder,
                                      CborIndefiniteLength);
     assert(_err == 0);
     return *this;
-  };
+  }
+
+  CborSerializer &end() {
+    _err = cbor_encoder_close_container(&_encoderRoot, &_encoder);
+    assert(_err == 0);
+    _size = cbor_encoder_get_buffer_size(&_encoderRoot, _buffer);
+    return *this;
+  }
+
+  bytes toBytes() { return bytes(_buffer, _buffer + _size); }
   ~CborSerializer() { delete _buffer; }
 };
-
-Log logger(1024);
-
-int main(int argc, char **argv) {
-  cout << "Start " << argv[0] << endl;
-  CborSerializer toCbor(1024);
-  bytes data = {0x1, 0x2, 0x3};
-
-  MsgPublish msgPublish = {1, data};
-  MsgPublisher msgPublisher = {2, "system/uptime"};
-  MsgSubscriber msgSubscriber = {3, "system/*"};
-  MsgConnect msgConnect = {"src/esp32/"};
-  msgConnect.reflect(toCbor());
-  COUT << " msgConnect " << hexDump(toCbor().toBytes()) << endl;
-  msgPublisher.reflect(toCbor());
-  COUT << " msgPublisher " << hexDump(toCbor().toBytes()) << endl;
-  msgSubscriber.reflect(toCbor());
-  COUT << " msgSubscriber " << hexDump(toCbor().toBytes()) << endl;
-  msgPublish.reflect(toCbor());
-  COUT << " msgPublish " << hexDump(toCbor().toBytes()) << endl;
-}
