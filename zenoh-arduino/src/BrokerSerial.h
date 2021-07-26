@@ -3,9 +3,11 @@
 #include <ArduinoJson.h>
 #include <broker.h>
 #include <broker_protocol.h>
-#include <cbor11.h>
 #include <limero.h>
-#include <ppp_frame.h>
+#include <Frame.h>
+#include <CborDeserializer.h>
+#include <CborSerializer.h>
+#include <CborDump.h>
 
 #include <string>
 
@@ -19,35 +21,8 @@ typedef vector<uint8_t> bytes;
 #define TIMER_CONNECT 2
 #define TIMER_SERIAL 3
 
-//=================================================================
-class FrameToCbor : public LambdaFlow<bytes, cbor>
-{
-public:
-  FrameToCbor()
-      : LambdaFlow<bytes, cbor>([](cbor &msg, const bytes &data)
-                                {
-                                  msg = cbor::decode(data);
-                                  INFO(" uC RXD CBOR %s", cbor::debug(msg).c_str());
-                                  return msg.is_array();
-                                }){};
-};
 //================================================================
-class CborFilter : public LambdaFlow<cbor, cbor>
-{
-  int _msgType;
 
-public:
-  CborFilter(int msgType)
-      : LambdaFlow<cbor, cbor>([this](cbor &out, const cbor &in)
-                               {
-                                 out = in;
-                                 return in.to_array()[0] == cbor(_msgType);
-                               })
-  {
-    _msgType = msgType;
-  };
-  static CborFilter &nw(int msgType) { return *new CborFilter(msgType); }
-};
 //================================================================
 class BytesToFrame : public Flow<bytes, bytes>
 {
@@ -108,18 +83,7 @@ public:
   }
   void request(){};
 };
-//=========================================================================
-class CborToFrame : public LambdaFlow<cbor, bytes>
-{
-public:
-  CborToFrame()
-      : LambdaFlow<cbor, bytes>([&](bytes &out, const cbor &in)
-                                {
-                                  INFO("uC TXD %s", cbor::debug(in).c_str());
-                                  out = ppp_frame(cbor::encode(in));
-                                  return true;
-                                }){};
-};
+
 
 class BrokerSerial : public broker::Broker
 {
@@ -129,9 +93,10 @@ class BrokerSerial : public broker::Broker
   broker::Publisher<uint64_t> *latencyPub;
   broker::Subscriber<uint64_t> *uptimeSub;
 
-  FrameToCbor _frameToCbor;
   BytesToFrame _bytesToFrame;
-  CborToFrame _toFrame;
+  FrameGenerator _toFrame;
+  CborSerializer _toCbor;
+  CborDeserializer _fromCbor;
 
   string _loopbackTopic = "dst/esp32/system/loopback";
   string _dstPrefix = "dst/esp32/";

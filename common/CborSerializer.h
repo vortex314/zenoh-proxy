@@ -5,7 +5,7 @@
 #include <cbor.h>
 #include <util.h>
 
-#include <assert>
+#include <assert.h>
 #include <iostream>
 #include <sstream>
 using namespace std;
@@ -20,13 +20,13 @@ class CborSerializer {
 
  public:
   CborSerializer(int size);
-  CborSerializer &member(const char *name, const int &t, const char *desc);
-  CborSerializer &member(const char *name, int &t, const char *desc);
-  CborSerializer &member(const char *name, uint64_t &t, const char *desc);
-  CborSerializer &member(const char *name, int64_t &t, const char *desc);
-  CborSerializer &member(const char *name, string &t, const char *desc);
-  CborSerializer &member(const char *name, double &t, const char *desc);
-  CborSerializer &member(const char *name, bytes &t, const char *desc);
+  CborSerializer &member( const int &t, const char *n="",const char *d="");
+  CborSerializer &member( int &t, const char *n="",const char *d="");
+  CborSerializer &member( uint64_t &t, const char *n="",const char *d="");
+  CborSerializer &member( int64_t &t, const char *n="",const char *d="");
+  CborSerializer &member( string &t, const char *n="",const char *d="");
+  CborSerializer &member( double &t, const char *n="",const char *d="");
+  CborSerializer &member( bytes &t, const char *n="",const char *d="");
   CborSerializer &begin();
   CborSerializer &end();
   bytes toBytes();

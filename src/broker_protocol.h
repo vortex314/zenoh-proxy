@@ -16,7 +16,7 @@ struct MsgBase {
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
-        .member("msgType", msgType, "type of polymorphic message")
+        .member(msgType, "msgType", "type of polymorphic message")
         .end();
   }
 };
@@ -27,8 +27,8 @@ struct MsgConnect {
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
-        .member("msgType", TYPE, "MsgConnect")
-        .member("clientId", clientId, "client identification")
+        .member(TYPE, "msgType", "MsgConnect")
+        .member(clientId, "clientId", "client identification")
         .end();
   }
 };
@@ -37,7 +37,7 @@ struct MsgDisconnect {
   static const int TYPE = B_DISCONNECT;
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
-    return r.begin().member("msgType", TYPE, "MsgDisconnect").end();
+    return r.begin().member(TYPE, "msgType", "MsgDisconnect").end();
   }
 };
 
@@ -48,9 +48,9 @@ struct MsgPublish {
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
-        .member("msgType", TYPE, "PublishMsg")
-        .member("id", id, "resource id")
-        .member("value", value, "data published")
+        .member(TYPE, "msgType", "PublishMsg")
+        .member(id, "id", "resource id")
+        .member(value, "value", "data published")
         .end();
   }
 };
@@ -61,9 +61,9 @@ struct MsgPublisher {
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
-        .member("msgType", TYPE, "MsgPublisher")
-        .member("id", id, "resource id")
-        .member("topic", topic, "publish topic")
+        .member(TYPE, "msgType", "MsgPublisher")
+        .member(id, "id", "resource id")
+        .member(topic, "topic", "publish topic")
         .end();
   }
 };
@@ -75,9 +75,9 @@ struct MsgSubscriber {
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
-        .member("msgType", TYPE, "MsgSubscriber")
-        .member("id", id, "resource id")
-        .member("topic", topic, "publish topic")
+        .member(TYPE, "msgType", "MsgSubscriber")
+        .member(id, "id", "resource id")
+        .member(topic, "topic", "publish topic")
         .end();
   }
 };

@@ -3,6 +3,18 @@ project(spine)
 
 include(GNUInstallDirs)
 
+set(CMAKE_CXX_STANDARD 11)
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 add_definitions(-DZENOH_LINUX -DZENOH_TRANSPORT_UDP_IP -DZENOH_DEBUG=1 -DLINUX)
 set (ZENOH_TRANSPORT_UDP "ON")
 
@@ -33,7 +45,7 @@ include_directories(
   ${ZENOHC}/include
 ../limero/inc 
 ../limero/linux  
-../cbor11
+  common
 ../tinycbor/src
 /home/lieven/workspace/ArduinoJson/src )
 
@@ -46,49 +58,46 @@ set (CMAKE_CXX_STANDARD 11)
  
 # set up our program
 add_executable(proxy)
-add_executable(snippets)
-add_executable(tiny)
+add_executable(test)
 
-
-target_sources(snippets PRIVATE 
-  src/snippets.cpp 
+  target_sources(test PRIVATE 
+  src/test.cpp 
   src/util.cpp
-  ../cbor11/cbor11.cpp ) 
-
-  target_sources(tiny PRIVATE 
-  src/tiny.cpp 
-  src/util.cpp
+  common/CborSerializer.cpp
+  common/CborDeserializer.cpp
  ) 
 
-target_sources(proxy PRIVATE src/proxy.cpp 
-  src/ppp_frame.cpp 
+target_sources(proxy PRIVATE 
+  src/proxy.cpp 
+  common/ppp_frame.cpp 
   src/serial.cpp 
   src/config.cpp 
   src/util.cpp
   src/serial_session.cpp
-  src/broker_zenoh.cpp
-  ../cbor11/cbor11.cpp ) 
+  src/BrokerZenoh.cpp
+  common/CborSerializer.cpp
+  common/CborDeserializer.cpp
+  common/CborDump.cpp
+  common/Frame.cpp) 
 
 target_link_libraries(proxy 
 -L/home/lieven/workspace/limero/linux/build -llimero 
+-L/home/lieven/workspace/tinycbor/lib -l:libtinycbor.a
 -L/usr/local/lib/ -lzenohc
 -lpthread  
 -lrt  
 -latomic)
 
-target_link_libraries(snippets 
--L/home/lieven/workspace/limero/linux/build -llimero 
--L/usr/local/lib/ -lzenohc
--lpthread  
--lrt  
--latomic)
-
-target_link_libraries(tiny 
+target_link_libraries(test 
 -L/home/lieven/workspace/limero/linux/build -llimero 
 -L/home/lieven/workspace/tinycbor/lib -l:libtinycbor.a
+gtest_main
 -lpthread  
 -lrt  
 -latomic)
+
+include(GoogleTest)
+gtest_discover_tests(test)
 
 
 

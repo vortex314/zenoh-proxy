@@ -175,7 +175,7 @@ int Serial::txd(const bytes &buffer) {
   buf = buffer.data();
   len = buffer.size();
   while (len > 0) {
-    INFO("serial write(%d,%d)  ", _fd, len);
+  //  INFO("serial write(%d,%d)  ", _fd, len);
 
     int rc = write(_fd, buf, len);
     if (rc == len) break;

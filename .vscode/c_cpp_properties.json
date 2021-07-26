@@ -4,7 +4,7 @@
             "name": "ESP32",
             "includePath": [
                 "/usr/local/include",
-                "${workspaceFolder}/../Common/",
+                "${workspaceFolder}/common/",
                 "${workspaceFolder}/../limero/inc/",
                 "${workspaceFolder}/../zenoh-c/include/",
                 "${workspaceFolder}/../tinycbor/src",

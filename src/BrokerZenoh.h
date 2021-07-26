@@ -2,6 +2,7 @@
 #define _ZENOH_SESSION_H_
 #include "limero.h"
 #include "util.h"
+#include "BrokerAbstract.h"
 extern "C" {
 #include "zenoh.h"
 #include "zenoh/net.h"
@@ -11,7 +12,6 @@ extern "C" {
 
 using namespace std;
 
-typedef int (*SubscribeCallback)(int, bytes);
 struct PubMsg {
   int id;
   bytes value;
@@ -20,7 +20,7 @@ struct PubMsg {
 struct Sub {
   int id;
   string key;
-  std::function<void(int,const bytes &)> callback;
+  std::function<void(int, const bytes &)> callback;
   zn_subscriber_t *zn_subscriber;
 };
 
@@ -31,7 +31,7 @@ struct Pub {
   zn_publisher_t *zn_publisher;
 };
 
-class BrokerZenoh : public Actor {
+class BrokerZenoh : public BrokerAbstract {
   zn_session_t *_zenoh_session;
   unordered_map<int, Sub *> _subscribers;
   unordered_map<int, Pub *> _publishers;
@@ -39,19 +39,20 @@ class BrokerZenoh : public Actor {
   zn_reskey_t resource(string topic);
   int scout();
 
-public:
+ public:
   ValueSource<bool> connected;
 
   BrokerZenoh(Thread &, Config &);
   int init();
-  int connect();
+  int connect(string);
   int disconnect();
   int publisher(int, string);
-  int subscriber(int, string, std::function<void(int,const bytes &)>);
+  int subscriber(int, string, std::function<void(int, const bytes &)>);
   int publish(int, bytes &);
   int onSubscribe(SubscribeCallback);
-  int unSubscriber(int);
+  int unSubscribe(int);
   vector<PubMsg> query(string);
 };
+
 // namespace zenoh
-#endif // _ZENOH_SESSION_h_
+#endif  // _ZENOH_SESSION_h_
