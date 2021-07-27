@@ -10,7 +10,8 @@
 #include <sstream>
 using namespace std;
 
-class CborSerializer {
+class CborSerializer
+{
   uint32_t _capacity;
   size_t _size;
   CborError _err;
@@ -18,15 +19,18 @@ class CborSerializer {
   CborEncoder _encoder;
   uint8_t *_buffer;
 
- public:
+public:
   CborSerializer(int size);
-  CborSerializer &member( const int &t, const char *n="",const char *d="");
-  CborSerializer &member( int &t, const char *n="",const char *d="");
-  CborSerializer &member( uint64_t &t, const char *n="",const char *d="");
-  CborSerializer &member( int64_t &t, const char *n="",const char *d="");
-  CborSerializer &member( string &t, const char *n="",const char *d="");
-  CborSerializer &member( double &t, const char *n="",const char *d="");
-  CborSerializer &member( bytes &t, const char *n="",const char *d="");
+  CborSerializer &member(const int &t, const char *n = "", const char *d = "");
+  CborSerializer &member(int &t, const char *n = "", const char *d = "");
+//  CborSerializer &member(int32_t &t, const char *n = "", const char *d = "");
+  CborSerializer &member(uint32_t &t, const char *n = "", const char *d = "");
+  CborSerializer &member(int64_t &t, const char *n = "", const char *d = "");
+  CborSerializer &member(uint64_t &t, const char *n = "", const char *d = "");
+  CborSerializer &member(string &t, const char *n = "", const char *d = "");
+  CborSerializer &member(float &t, const char *n = "", const char *d = "");
+  CborSerializer &member(double &t, const char *n = "", const char *d = "");
+  CborSerializer &member(bytes &t, const char *n = "", const char *d = "");
   CborSerializer &begin();
   CborSerializer &end();
   bytes toBytes();

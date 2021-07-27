@@ -47,7 +47,7 @@ void FrameExtractor::request(){};
 
 FrameGenerator::FrameGenerator()
     : LambdaFlow<bytes, bytes>([&](bytes &out, const bytes &in) {
-        INFO("TXD %s",cborDump(in).c_str());
+//        INFO("TXD %s",cborDump(in).c_str());
         out = ppp_frame(in);
         return true;
       }){};

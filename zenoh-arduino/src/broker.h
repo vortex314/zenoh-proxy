@@ -4,6 +4,7 @@
 #include <util.h>
 #include <CborSerializer.h>
 #include <CborDeserializer.h>
+#include <CborDump.h>
 
 #include <vector>
 using namespace std;
@@ -27,23 +28,8 @@ namespace broker
   {
   public:
     Subscriber(int id, string key)
-        : LambdaFlow<bytes, T>([](T &t, const bytes &data)
-                               {
-                                 CborDeserializer fromCbor(100);
-                                 MsgPublish msgPublish;
-          if ( msgPublish.reflect(fromCbor.fromBytes(data)).success() )
-            {
-              
-            };
-          return true;
-                               }),
+        : LambdaFlow<bytes, T>(),
           Resource(id, key){};
-    template <typename Reflector>
-    Reflector &reflect(Reflector &r)
-    {
-      T t;
-      r.begin().member("", t, "");
-    }
   };
 
   template <typename T>
@@ -55,7 +41,8 @@ namespace broker
                                {
                                  CborSerializer toCbor(100);
                                  bytes bs = toCbor.begin().member(t).end().toBytes();
-                                 MsgPublish msgPublish = {Resource::id(),bs};
+                                 MsgPublish msgPublish = {Resource::id(), bs};
+                                 cb = msgPublish.reflect(toCbor).toBytes();
                                  return true;
                                }),
           Resource(id, key){};
@@ -64,8 +51,11 @@ namespace broker
   class Broker : public Actor
   {
   public:
-    ValueFlow<bytes> incomingCbor;
-    ValueFlow<bytes> outgoingCbor;
+    ValueFlow<bytes> outgoingFrame;
+    ValueFlow<bytes> incomingPublish;
+    ValueFlow<bytes> incomingConnect;
+    ValueFlow<bytes> incomingDisconnect;
+
     int _resourceId = 0;
 
     vector<Resource *> _publishers;
@@ -91,7 +81,7 @@ namespace broker
     }
     Publisher<T> *p = new Publisher<T>(_resourceId++, topic);
     _publishers.push_back(p);
-    *p >> outgoingCbor;
+    *p >> outgoingFrame;
     INFO(" created publisher %s : %X ", name.c_str(), p);
     return *p;
   }
@@ -108,16 +98,18 @@ namespace broker
     s->lambda([&](T &t, const bytes &in)
               {
                 MsgPublish msgPublish;
-                MsgBase msgBase;
                 CborDeserializer fromCbor(100);
-                if (msgBase.reflect(fromCbor.fromBytes(in)).success() && msgBase.msgType == B_PUBLISH && msgPublish.reflect(fromCbor.fromBytes(in)).success())
+                if (msgPublish.reflect(fromCbor.fromBytes(in)).success())
                 {
-                    //do some with msgPublish.value
+//                  INFO("subscriber rcv %s", cborDump(msgPublish.value).c_str());
+                  fromCbor.fromBytes(msgPublish.value).begin().member(t).end().success();
+//                  INFO(" %ld ", t);
+                  return true;
                 }
                 return false;
               });
     _subscribers.push_back(s);
-    incomingCbor >> s;
+    incomingPublish >> s;
     INFO(" created subscriber %s : %X ", name.c_str(), s);
     return *s;
   }

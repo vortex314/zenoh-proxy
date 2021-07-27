@@ -49,34 +49,30 @@ void BrokerSerial::init()
   INFO(" %X %X ", uptimePub, latencyPub);
   uptimeSub = &subscriber<uint64_t>(brokerSrcPrefix + "system/uptime");
 
-  serialRxd >> _bytesToFrame;
-  _bytesToFrame >> [&](const bytes &bs)
-  { INFO("RXD %s", cborDump(bs).c_str()); };
-
-  outgoingCbor >> _toFrame;
-  //  outgoingCbor.async(thread());
-
-  _toFrame >> [&](const bytes &bs)
+  outgoingFrame >> _frameToBytes;
+  _frameToBytes >> [&](const bytes &bs)
   { _serial.write(bs.data(), bs.size()); };
+
+  serialRxd >> _bytesToFrame;
+  _bytesToFrame >> MsgFilter::nw(B_PUBLISH) >> incomingPublish;
+  _bytesToFrame >> MsgFilter::nw(B_CONNECT) >> incomingConnect;
+  _bytesToFrame >> MsgFilter::nw(B_DISCONNECT) >> incomingDisconnect;
+
+/*  _bytesToFrame >> [&](const bytes &bs)
+  { INFO("RXD %s", cborDump(bs).c_str()); };*/
 
   keepAliveTimer >> [&](const TimerMsg &tm)
   {
-    INFO(" connected : %s ", connected() ? "true" : "false");
+//    INFO(" connected : %s ", connected() ? "true" : "false");
     if (connected())
       uptimePub->on(Sys::millis());
     else
     {
       MsgConnect msgConnect = {brokerSrcPrefix};
-      _toFrame.on(msgConnect.reflect(_toCbor).toBytes());
+      outgoingFrame.on(msgConnect.reflect(_toCbor).toBytes());
     }
   };
-  _bytesToFrame >> filter<bytes>([&](const bytes &in) -> bool
-                                 {
-                                   INFO("filter %s", cborDump(in).c_str());
-                                   MsgBase msgBase;
-                                   INFO(" success : %s msgType : %d ", msgBase.reflect(_fromCbor.fromBytes(in)).success() ? "true" : "false", msgBase.msgType );
-                                   return (msgBase.reflect(_fromCbor.fromBytes(in)).success() && msgBase.msgType == B_CONNECT);
-                                 }) >>
+  incomingConnect >>
       [&](const bytes &in)
   {
     connected = true;
@@ -85,25 +81,26 @@ void BrokerSerial::init()
     for (auto sub : _subscribers)
     {
       MsgSubscriber msgSubscriber = {sub->id(), sub->key()};
-      _toFrame.on(msgSubscriber.reflect(_toCbor).toBytes());
+      outgoingFrame.on(msgSubscriber.reflect(_toCbor).toBytes());
     }
     for (auto pub : _publishers)
     {
       MsgPublisher msgPublisher = {pub->id(), pub->key()};
-      _toFrame.on(msgPublisher.reflect(_toCbor).toBytes());
+      outgoingFrame.on(msgPublisher.reflect(_toCbor).toBytes());
     }
   };
 
   *uptimeSub >> [&](const uint64_t &t)
   {
-    latencyPub->on(t - Sys::millis());
+    //    INFO(" received uptime %lu ", t);
+    latencyPub->on(Sys::millis() - t);
     _loopbackReceived = Sys::millis();
   };
 
   connectTimer >> [&](const TimerMsg &tm)
   {
     uint64_t timeSinceLoopback = Sys::millis() - _loopbackReceived;
-    if (timeSinceLoopback > 3000)
+    if (timeSinceLoopback > 5000)
       connected = false;
   };
 
@@ -118,6 +115,5 @@ void BrokerSerial::onRxd(void *me)
   {
     data.push_back(brk->_serial.read());
   }
-  //  INFO(" data : %d ", data.size());
   brk->serialRxd.emit(data);
 }

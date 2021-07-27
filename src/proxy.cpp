@@ -40,10 +40,11 @@ class MsgFilter : public LambdaFlow<bytes, bytes> {
  public:
   MsgFilter(int msgType)
       : LambdaFlow<bytes, bytes>([this](bytes &out, const bytes &in) {
- //         INFO(" filter on msgType : %d in %s ", _msgType,cborDump(in).c_str());
+          //         INFO(" filter on msgType : %d in %s ",
+          //         _msgType,cborDump(in).c_str());
           if (msgBase.reflect(_fromCbor.fromBytes(in)).success() &&
               msgBase.msgType == _msgType) {
-//            INFO(" found msgType : %d  ", msgBase.msgType);
+            //            INFO(" found msgType : %d  ", msgBase.msgType);
             out = in;
             return true;
           }
@@ -68,7 +69,7 @@ int main(int argc, char **argv) {
   FrameExtractor bytesToFrame;
   CborDeserializer fromCbor(1024);
   CborSerializer toCbor(1024);
-  FrameGenerator toFrame;
+  FrameGenerator frameToBytes;
 
   serial.init();
   serial.connect();
@@ -76,7 +77,7 @@ int main(int argc, char **argv) {
   broker.init();
   // CBOR de-/serialization
   serial.incoming >> bytesToFrame;
-  toFrame >> serial.outgoing;
+  frameToBytes >> serial.outgoing;
 
   bytesToFrame >>
       [&](const bytes &bs) { INFO("RXD %s", cborDump(bs).c_str()); };
@@ -87,7 +88,7 @@ int main(int argc, char **argv) {
     if (msgConnect.reflect(fromCbor.fromBytes(frame)).success()) {
       int rc = broker.connect(msgConnect.clientId);
       MsgConnect msgConnectReply = {"connected"};
-      toFrame.on(msgConnectReply.reflect(toCbor).toBytes());
+      frameToBytes.on(msgConnectReply.reflect(toCbor).toBytes());
     }
   };
 
@@ -97,7 +98,7 @@ int main(int argc, char **argv) {
       int rc = broker.subscriber(
           msgSubscriber.id, msgSubscriber.topic, [&](int id, const bytes &bs) {
             MsgPublish msgPublish = {id, bs};
-            toFrame.on(msgPublish.reflect(toCbor).toBytes());
+            frameToBytes.on(msgPublish.reflect(toCbor).toBytes());
           });
       if (rc)
         WARN(" subscriber (%s,..) = %d ", msgSubscriber.topic.c_str(), rc);
@@ -119,7 +120,7 @@ int main(int argc, char **argv) {
     }
   };
 
-  bytesToFrame >> MsgFilter::nw(B_PUBLISH) >> [&](const bytes &frame) {
+  bytesToFrame >> MsgFilter::nw(B_DISCONNECT) >> [&](const bytes &frame) {
     MsgDisconnect msgDisconnect;
     if (msgDisconnect.reflect(fromCbor.fromBytes(frame)).success()) {
       broker.disconnect();
@@ -130,7 +131,7 @@ int main(int argc, char **argv) {
       INFO("Z_RESOURCE");
       string resource = param.to_array()[1];
       zenoh::ResourceKey key = zSession.resource(resource);
-      toFrame.on(cbor::array{Z_RESOURCE, resource, key});
+      frameToBytes.on(cbor::array{Z_RESOURCE, resource, key});
     };*/
   /*
     frameToCbor >> CborFilter::nw(Z_QUERY) >> [&](const cbor &param) {
@@ -138,7 +139,7 @@ int main(int argc, char **argv) {
       string uri = param.to_array()[1];
       auto result = zSession.query(uri);
       for (auto res : result) {
-        toFrame.on(cbor::array{Z_QUERY, res.key, res.data});
+        frameToBytes.on(cbor::array{Z_QUERY, res.key, res.data});
       }
     };*/
 

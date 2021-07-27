@@ -16,7 +16,7 @@ struct MsgBase {
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     r.begin().member(msgType, "msgType", "type of polymorphic message").end();
- //   INFO(" looking for int %d ", msgType);
+    //   INFO(" looking for int %d ", msgType);
     return r;
   }
 };
@@ -35,6 +35,7 @@ struct MsgConnect {
 
 struct MsgDisconnect {
   static const int TYPE = B_DISCONNECT;
+
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin().member(TYPE, "msgType", "MsgDisconnect").end();
@@ -44,7 +45,9 @@ struct MsgDisconnect {
 struct MsgPublish {
   int id;
   bytes value;
+
   static const int TYPE = B_PUBLISH;
+
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
@@ -57,7 +60,9 @@ struct MsgPublish {
 struct MsgPublisher {
   int id;
   string topic;
+
   static const int TYPE = B_PUBLISHER;
+
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()
@@ -71,7 +76,9 @@ struct MsgPublisher {
 struct MsgSubscriber {
   int id;
   string topic;
+
   static const int TYPE = B_SUBSCRIBER;
+
   template <typename Reflector>
   Reflector &reflect(Reflector &r) {
     return r.begin()

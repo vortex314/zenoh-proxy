@@ -17,7 +17,13 @@ class CborDeserializer {
   CborDeserializer &end();
   CborDeserializer &member(bytes &t, const char *n="",const char *d="");
   CborDeserializer &member(string &t, const char *n="",const char *d="");
-  CborDeserializer &member(int &t, const char *n="",const char *d="");
+  CborDeserializer &member(int &t, const char *n="",const char *d="");  
+//  CborDeserializer &member(int32_t &t, const char *n="",const char *d="");
+  CborDeserializer &member(uint32_t &t, const char *n="",const char *d="");
+  CborDeserializer &member(int64_t &t, const char *n="",const char *d="");
+  CborDeserializer &member(uint64_t &t, const char *n="",const char *d="");
+  CborDeserializer &member(float &t, const char *n="",const char *d="");
+  CborDeserializer &member(double &t, const char *n="",const char *d="");
   CborDeserializer &member(const int &t, const char *n="",const char *d="");
   CborDeserializer &fromBytes(const bytes &bs);
   bool success();

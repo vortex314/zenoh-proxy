@@ -52,6 +52,7 @@ include_directories(
 add_definitions(-DCATCH_CONFIG_DISABLE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -DZENOH_LINUX -DZENOH_TRANSPORT_UDP_IP -DZENOH_DEBUG=1")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -g -DZENOH_LINUX -DZENOH_TRANSPORT_UDP_IP -DZENOH_DEBUG=1")
+# set(CMAKE_BUILD_TYPE Debug)
 
 set (CMAKE_CXX_STANDARD 11)
 
@@ -60,11 +61,12 @@ set (CMAKE_CXX_STANDARD 11)
 add_executable(proxy)
 add_executable(test)
 
-  target_sources(test PRIVATE 
+target_sources(test PRIVATE 
   src/test.cpp 
   src/util.cpp
   common/CborSerializer.cpp
   common/CborDeserializer.cpp
+  common/CborDump.cpp
  ) 
 
 target_sources(proxy PRIVATE 

@@ -94,7 +94,7 @@ class BrokerSerial : public broker::Broker
   broker::Subscriber<uint64_t> *uptimeSub;
 
   BytesToFrame _bytesToFrame;
-  FrameGenerator _toFrame;
+  FrameGenerator _frameToBytes;
   CborSerializer _toCbor;
   CborDeserializer _fromCbor;
 

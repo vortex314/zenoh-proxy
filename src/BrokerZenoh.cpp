@@ -1,6 +1,8 @@
 
 #include <BrokerZenoh.h>
 
+#include <CborDump.h>
+
 void BrokerZenoh::subscribeHandler(const zn_sample_t *sample, const void *arg) {
   Sub *pSub = (Sub *)arg;
   string key(sample->key.val, sample->key.len);
@@ -55,6 +57,7 @@ int BrokerZenoh::connect(string clientId) {
 }
 
 int BrokerZenoh::disconnect() {
+  INFO(" disconnecting.");
   for (auto tuple : _subscribers) {
     zn_undeclare_subscriber(tuple.second->zn_subscriber);
   }
@@ -98,11 +101,11 @@ int BrokerZenoh::unSubscribe(int id) {
 }
 
 int BrokerZenoh::publisher(int id, string key) {
-  INFO(" Zenoh publisher %d : %s ", id, key.c_str());
   if (_publishers.find(id) == _publishers.end()) {
+    INFO(" Adding Zenoh publisher %d : '%s' in %d publishers", id, key.c_str(),_publishers.size());
     zn_reskey_t reskey = resource(key);
     zn_publisher_t *pub = zn_declare_publisher(_zenoh_session, reskey);
-    if (pub == 0) WARN(" unable to declare publisher %s", key.c_str());
+    if (pub == 0) WARN(" unable to declare publisher '%s'", key.c_str());
     Pub *pPub = new Pub{id, key, reskey, pub};
     _publishers.emplace(id, pPub);
   }
@@ -110,15 +113,15 @@ int BrokerZenoh::publisher(int id, string key) {
 }
 
 int BrokerZenoh::publish(int id, bytes &bs) {
-  INFO("publish");
   auto it = _publishers.find(id);
   if (it != _publishers.end()) {
+    INFO("publish %d : %s => %s ", id, it->second->key.c_str(), cborDump(bs).c_str());
     int rc =
         zn_write(_zenoh_session, it->second->zn_reskey, bs.data(), bs.size());
     if (rc) WARN("zn_write failed.");
     return rc;
   } else {
-    INFO(" publish id %d unknown. ", id);
+    INFO(" publish id %d unknown in %d publishers. ", id,_publishers.size());
     return ENOENT;
   }
 }
