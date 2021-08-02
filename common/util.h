@@ -2,13 +2,13 @@
 #define _UTIL_H_
 #include <string>
 #include <vector>
+#include <unordered_map> 
 
-#include "ArduinoJson.h"
 using namespace std;
 
 typedef vector<uint8_t> bytes;
 typedef uint8_t byte;
-typedef JsonObject Config;
+typedef unordered_map<const char*,const char*> Config;
 
 string hexDump(bytes, const char *spacer = " ");
 string charDump(bytes);

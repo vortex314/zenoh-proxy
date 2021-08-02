@@ -45,9 +45,8 @@ void FrameExtractor::handleRxd(const bytes &bs) {
 void FrameExtractor::request(){};
 
 
-FrameGenerator::FrameGenerator()
+FrameToBytes::FrameToBytes()
     : LambdaFlow<bytes, bytes>([&](bytes &out, const bytes &in) {
-//        INFO("TXD %s",cborDump(in).c_str());
         out = ppp_frame(in);
         return true;
       }){};

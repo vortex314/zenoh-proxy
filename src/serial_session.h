@@ -2,7 +2,8 @@
 #define _SESSION_SERIAL_H_
 #include <limero.h>
 #include <serial.h>
-#include <util.h>
+
+#include "util.h"
 typedef enum { CMD_OPEN, CMD_CLOSE } TcpCommand;
 
 class SerialSessionError;
@@ -12,13 +13,14 @@ class SerialSession : public Actor, public Invoker {
   int _serialfd;
   Serial _serialPort;
   string _port;
+  uint32_t _baudrate;
   bytes _rxdBuffer;
   bytes _inputFrame;
   bytes _cleanData;
   uint64_t _lastFrameFlag;
   uint64_t _frameTimeout = 2000;
 
-public:
+ public:
   ValueSource<bytes> incoming;
   Sink<bytes> outgoing;
   ValueSource<bool> connected;
@@ -35,7 +37,7 @@ public:
 class SerialSessionError : public Invoker {
   SerialSession &_serialSession;
 
-public:
+ public:
   SerialSessionError(SerialSession &serialSession)
       : _serialSession(serialSession){};
   void invoke() { _serialSession.onError(); }

@@ -28,8 +28,17 @@ const int MsgDisconnect::TYPE;
 const char *CMD_TO_STRING[] = {"B_CONNECT",   "B_DISCONNECT", "B_SUBSCRIBER",
                                "B_PUBLISHER", "B_PUBLISH",    "B_RESOURCE",
                                "B_QUERY"};
+StaticJsonDocument<10240> doc;
 
-Config loadConfig(int argc, char **argv) { return Config(); };
+Config loadConfig(int argc, char **argv) {
+  Config cfg = doc.to<JsonObject>();
+  if (argc > 1) cfg["serial"]["port"] = argv[1];
+  if (argc > 2) cfg["serial"]["baudrate"] = atoi(argv[2]);
+  string sCfg;
+  serializeJson(doc, sCfg);
+  INFO(" config : %s ", sCfg.c_str());
+  return cfg;
+};
 
 //================================================================
 class MsgFilter : public LambdaFlow<bytes, bytes> {
@@ -62,6 +71,7 @@ int main(int argc, char **argv) {
   Thread workerThread("worker");
 
   Config serialConfig = config["serial"];
+
   SerialSession serial(workerThread, serialConfig);
 
   Config brokerConfig = config["zenoh"];
@@ -69,43 +79,46 @@ int main(int argc, char **argv) {
   FrameExtractor bytesToFrame;
   CborDeserializer fromCbor(1024);
   CborSerializer toCbor(1024);
-  FrameGenerator frameToBytes;
+  FrameToBytes frameToBytes;
+  ValueFlow<bytes> toSerialMsg;
+  ValueFlow<bytes> fromSerialMsg;
 
   serial.init();
   serial.connect();
   // zSession.scout();
   broker.init();
   // CBOR de-/serialization
-  serial.incoming >> bytesToFrame;
-  frameToBytes >> serial.outgoing;
+  serial.incoming >> bytesToFrame >> fromSerialMsg;
+  toSerialMsg >> frameToBytes >> serial.outgoing;
 
-  bytesToFrame >>
+  toSerialMsg >> [&](const bytes &bs) { INFO("TXD %s", cborDump(bs).c_str()); };
+  fromSerialMsg >>
       [&](const bytes &bs) { INFO("RXD %s", cborDump(bs).c_str()); };
 
   // filter commands from uC
-  bytesToFrame >> MsgFilter::nw(B_CONNECT) >> [&](const bytes &frame) {
+  fromSerialMsg  >> MsgFilter::nw(B_CONNECT) >> [&](const bytes &frame) {
     MsgConnect msgConnect;
     if (msgConnect.reflect(fromCbor.fromBytes(frame)).success()) {
       int rc = broker.connect(msgConnect.clientId);
       MsgConnect msgConnectReply = {"connected"};
-      frameToBytes.on(msgConnectReply.reflect(toCbor).toBytes());
+      toSerialMsg.on(msgConnectReply.reflect(toCbor).toBytes());
     }
   };
 
-  bytesToFrame >> MsgFilter::nw(B_SUBSCRIBER) >> [&](const bytes &frame) {
+  fromSerialMsg >> MsgFilter::nw(B_SUBSCRIBER) >> [&](const bytes &frame) {
     MsgSubscriber msgSubscriber;
     if (msgSubscriber.reflect(fromCbor.fromBytes(frame)).success()) {
       int rc = broker.subscriber(
           msgSubscriber.id, msgSubscriber.topic, [&](int id, const bytes &bs) {
             MsgPublish msgPublish = {id, bs};
-            frameToBytes.on(msgPublish.reflect(toCbor).toBytes());
+            toSerialMsg.on(msgPublish.reflect(toCbor).toBytes());
           });
       if (rc)
         WARN(" subscriber (%s,..) = %d ", msgSubscriber.topic.c_str(), rc);
     }
   };
 
-  bytesToFrame >> MsgFilter::nw(B_PUBLISHER) >> [&](const bytes &frame) {
+  fromSerialMsg >> MsgFilter::nw(B_PUBLISHER) >> [&](const bytes &frame) {
     MsgPublisher msgPublisher;
     if (msgPublisher.reflect(fromCbor.fromBytes(frame)).success()) {
       int rc = broker.publisher(msgPublisher.id, msgPublisher.topic);
@@ -113,14 +126,14 @@ int main(int argc, char **argv) {
     };
   };
 
-  bytesToFrame >> MsgFilter::nw(B_PUBLISH) >> [&](const bytes &frame) {
+  fromSerialMsg >> MsgFilter::nw(B_PUBLISH) >> [&](const bytes &frame) {
     MsgPublish msgPublish;
     if (msgPublish.reflect(fromCbor.fromBytes(frame)).success()) {
       broker.publish(msgPublish.id, msgPublish.value);
     }
   };
 
-  bytesToFrame >> MsgFilter::nw(B_DISCONNECT) >> [&](const bytes &frame) {
+  fromSerialMsg >> MsgFilter::nw(B_DISCONNECT) >> [&](const bytes &frame) {
     MsgDisconnect msgDisconnect;
     if (msgDisconnect.reflect(fromCbor.fromBytes(frame)).success()) {
       broker.disconnect();

@@ -44,7 +44,7 @@ CborDeserializer &CborDeserializer::member(string &t, const char *name,
     _err = cbor_value_dup_text_string(&_it, &temp, &size, 0);
     assert(_err == CborNoError);
     t = temp;
-    free(temp);
+    ::free(temp);
   }
   _err = cbor_value_advance(&_it);
   return *this;

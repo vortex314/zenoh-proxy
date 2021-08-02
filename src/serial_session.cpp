@@ -7,12 +7,13 @@ SerialSession::SerialSession(Thread &thread, Config config)
         _serialPort.txd(data);
       }) {
   _errorInvoker = new SerialSessionError(*this);
+  _port = config["port"].as<std::string>() ;
+  _baudrate = config["baudrate"].as<uint32_t>();
 }
 
 bool SerialSession::init() {
-  _port = "/dev/ttyUSB0";
-  _serialPort.port(_port.c_str());
-  _serialPort.baudrate(115200);
+  _serialPort.port(_port);
+  _serialPort.baudrate(_baudrate);
   _serialPort.init();
   return true;
 }

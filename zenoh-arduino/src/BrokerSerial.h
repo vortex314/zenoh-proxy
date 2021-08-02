@@ -1,6 +1,5 @@
 #ifndef BrokerSerial_H
 #define BrokerSerial_H
-#include <ArduinoJson.h>
 #include <broker.h>
 #include <broker_protocol.h>
 #include <limero.h>
@@ -94,7 +93,7 @@ class BrokerSerial : public broker::Broker
   broker::Subscriber<uint64_t> *uptimeSub;
 
   BytesToFrame _bytesToFrame;
-  FrameGenerator _frameToBytes;
+  FrameToBytes _frameToBytes;
   CborSerializer _toCbor;
   CborDeserializer _fromCbor;
 

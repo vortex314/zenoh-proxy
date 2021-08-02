@@ -18,9 +18,9 @@ class FrameExtractor : public Flow<bytes, bytes> {
   void handleRxd(const bytes &bs);
   void request();
 };
-class FrameGenerator : public LambdaFlow<bytes, bytes> {
+class FrameToBytes : public LambdaFlow<bytes, bytes> {
  public:
-  FrameGenerator();
+  FrameToBytes();
 };
 
 #endif /* A4D87CFA_B381_4A7A_9FB2_67EDFB2285CB */
